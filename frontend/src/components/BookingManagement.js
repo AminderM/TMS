@@ -42,7 +42,13 @@ const BookingManagement = () => {
 
   const loadBookings = async () => {
     try {
-      const response = await fetchWithAuth(`${BACKEND_URL}/api/bookings/my`);
+      // Use /api/bookings/requests for platform_admin to avoid 500 error
+      // when fleet_owner_id is null
+      const endpoint = (user?.role === 'platform_admin' || user?.role === 'fleet_owner')
+        ? `${BACKEND_URL}/api/bookings/requests`
+        : `${BACKEND_URL}/api/bookings/my`;
+      
+      const response = await fetchWithAuth(endpoint);
       if (response.ok) {
         const data = await response.json();
         setBookings(data);

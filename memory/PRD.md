@@ -11,7 +11,7 @@ Admin Portal for the Integrated Tech TMS platform - manages users, subscriptions
 - **GitHub**: https://github.com/AminderM/Admin-Portal
 - **Commit**: 6aab550 (ADMIN CODE)
 
-## Current Setup (March 9, 2026)
+## Current Setup (March 9-10, 2026)
 - Frontend connected to staging backend: `https://api.staging.integratedtech.ca`
 - Preview URL: `https://59e63a5e-ded1-4048-ae67-e39099890f2a.preview.emergentagent.com`
 
@@ -19,35 +19,67 @@ Admin Portal for the Integrated Tech TMS platform - manages users, subscriptions
 - **Email**: aminderpro@gmail.com
 - **Password**: Admin@123!
 
+## Backend Bug Identified & Frontend Workaround Applied
+
+### Issue: `/api/bookings/my` Returns 500 Error
+- **Root Cause**: Platform Admin user has `fleet_owner_id: null`, causing backend to crash
+- **Status**: Backend team needs to fix null handling
+- **Frontend Workaround**: Applied - now uses `/api/bookings/requests` for platform_admin users
+
+### Files Modified:
+- `/app/frontend/src/components/BookingManagement.js` - Added platform_admin check
+
+## API Verification Results
+
+### Working Endpoints (Frontend Paths):
+| Endpoint | Status |
+|----------|--------|
+| `/api/admin/users` | ✅ 200 |
+| `/api/admin/plans` | ✅ 200 |
+| `/api/bundles/products` | ✅ 200 |
+| `/api/drivers/all` | ✅ 200 |
+| `/api/equipment/my` | ✅ 200 |
+| `/api/accounting/receivables` | ✅ 200 |
+| `/api/accounting/payables` | ✅ 200 |
+| `/api/bookings/requests` | ✅ 200 |
+
+### Bug (Backend Fix Needed):
+| Endpoint | Status |
+|----------|--------|
+| `/api/bookings/my` | ⚠️ 500 |
+
+### Not Yet Implemented (Future Features):
+| Endpoint | Status |
+|----------|--------|
+| `/api/operations/orders` | ❌ 404 |
+| `/api/fleet/vehicles` | ❌ 404 |
+| `/api/billing/invoices` | ❌ 404 |
+| `/api/auth/workspaces` | ❌ 404 |
+| `/api/master-data/tax/*` | ❌ 404 |
+| `/api/pricing/*` | ❌ 404 |
+
 ## Features Status
 
 ### ✅ Working
-- **Authentication** - Login/logout with JWT
-- **Dashboard Overview** - Stats display (Tenants, Subscriptions, Revenue, Plans)
-- **User Management** - List users, create user, edit user, status toggle
-- **Products** - 11 products displaying (TMS Basic/Pro/Enterprise, Heavy TMS, etc.)
-- **Subscription Manager** - Product Bundles, Subscriptions, Available Products tabs
-- **CRM** - Dashboard, Company, Contacts, Deals, Activity Log
-- **Carrier Lookup** - FMCSA search by DOT# or company name
-- **Integrations** - List integrations, add/remove, toggle active status
-- **Sales Analytics** - Analytics dashboard
+- Authentication & Login
+- Admin Dashboard (Tenants, Subscriptions, Revenue, Plans)
+- User Management
+- Products (11 products)
+- Subscription Manager
+- CRM (Company, Contacts, Deals, Activities)
+- Carrier Lookup (FMCSA)
+- Integrations Management
+- TMS Dashboard
+- Order Management (with workaround)
+- Equipment Management
+- Driver Management
+- Accounting (AR/AP)
 
-### API Endpoints Used
-- `/api/auth/login` - Authentication
-- `/api/admin/plans` - Get subscription plans
-- `/api/admin/users` - User management
-- `/api/admin/integrations` - Integrations management
-- `/api/admin/crm/*` - CRM endpoints
-- `/api/bundles/*` - Bundle management
-- `/api/fmcsa/carrier/*` - FMCSA carrier lookup
+## Pending Backend Fixes
+1. Fix `/api/bookings/my` - null fleet_owner_id handling
 
-## Backend API (api.staging.integratedtech.ca)
-- 11 subscription plans available
-- 2 active users
-- OpenAI GPT-4o integration configured
-- FMCSA QCMobile API integration configured
-
-## Next Tasks
-1. Monitor for any specific issues user identifies
-2. Test all CRUD operations thoroughly
-3. Verify data syncs correctly between frontend and backend
+## Future Features (After Backend Implements)
+1. Workspace-based navigation
+2. Tax calculator
+3. Rate cards & accessorials
+4. New API structure migration
