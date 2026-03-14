@@ -69,12 +69,6 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
     onChange({ noaDocument: null });
   };
 
-  const maskAccountNumber = (number) => {
-    if (!number || showAccountNumber) return number;
-    if (number.length <= 4) return '****';
-    return '****' + number.slice(-4);
-  };
-
   const showCanadian = country === 'Canada' || country === 'Both' || !country;
   const showUS = country === 'USA' || country === 'Both' || !country;
 
@@ -82,46 +76,46 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
     <div className="space-y-8" data-testid="payment-setup-step">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-          <CreditCard className="w-7 h-7 text-[#00D4FF]" />
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <CreditCard className="w-7 h-7 text-primary" />
           Payment Setup
         </h2>
-        <p className="text-[#8B9DB5] mt-2">
+        <p className="text-muted-foreground mt-2">
           Configure your payment preferences and banking information
         </p>
       </div>
 
       {/* Security Notice */}
-      <div className="flex items-start gap-3 p-4 bg-[#00D4FF]/5 border border-[#00D4FF]/20 rounded-lg">
-        <Shield className="w-5 h-5 text-[#00D4FF] flex-shrink-0 mt-0.5" />
-        <p className="text-[#8B9DB5] text-sm">
-          <span className="text-[#00D4FF] font-medium">Your data is secure.</span>{' '}
+      <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+        <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+        <p className="text-muted-foreground text-sm">
+          <span className="text-primary font-medium">Your data is secure.</span>{' '}
           Banking details are encrypted and never shared with brokers or shippers.
         </p>
       </div>
 
       {/* Payment Method */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
-        <h3 className="text-lg font-semibold text-white mb-6">Payment Method</h3>
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Payment Method</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label className="text-white font-medium">
-              Preferred Payment Method <span className="text-red-400">*</span>
+            <Label className="text-foreground font-medium">
+              Preferred Payment Method <span className="text-destructive">*</span>
             </Label>
             <Select 
               value={data.paymentMethod} 
               onValueChange={(value) => handleInputChange('paymentMethod', value)}
             >
               <SelectTrigger 
-                className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white focus:border-[#00D4FF]"
+                className="mt-2 bg-background border-border text-foreground focus:border-primary"
                 data-testid="payment-method-select"
               >
                 <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
+              <SelectContent className="bg-popover border-border">
                 {paymentMethods.map((method) => (
-                  <SelectItem key={method.value} value={method.value} className="text-white hover:bg-[#1B3A5A]">
+                  <SelectItem key={method.value} value={method.value} className="text-popover-foreground hover:bg-muted">
                     {method.label}
                   </SelectItem>
                 ))}
@@ -130,20 +124,20 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
           </div>
 
           <div>
-            <Label className="text-white font-medium">Payment Terms</Label>
+            <Label className="text-foreground font-medium">Payment Terms</Label>
             <Select 
               value={data.paymentTerms} 
               onValueChange={(value) => handleInputChange('paymentTerms', value)}
             >
               <SelectTrigger 
-                className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white focus:border-[#00D4FF]"
+                className="mt-2 bg-background border-border text-foreground focus:border-primary"
                 data-testid="payment-terms-select"
               >
                 <SelectValue placeholder="Select payment terms" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
+              <SelectContent className="bg-popover border-border">
                 {paymentTerms.map((term) => (
-                  <SelectItem key={term.value} value={term.value} className="text-white hover:bg-[#1B3A5A]">
+                  <SelectItem key={term.value} value={term.value} className="text-popover-foreground hover:bg-muted">
                     {term.label}
                   </SelectItem>
                 ))}
@@ -154,11 +148,11 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
 
         {/* Factoring Company Details */}
         {data.paymentMethod === 'factoring' && (
-          <div className="mt-6 pt-6 border-t border-[#1B3A5A]">
-            <h4 className="text-white font-medium mb-4">Factoring Company Details</h4>
+          <div className="mt-6 pt-6 border-t border-border">
+            <h4 className="text-foreground font-medium mb-4">Factoring Company Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="factoringCompanyName" className="text-white font-medium">
+                <Label htmlFor="factoringCompanyName" className="text-foreground font-medium">
                   Factoring Company Name
                 </Label>
                 <Input
@@ -166,24 +160,24 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
                   value={data.factoringCompanyName}
                   onChange={(e) => handleInputChange('factoringCompanyName', e.target.value)}
                   placeholder="Enter factoring company name"
-                  className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+                  className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                   data-testid="factoring-company-input"
                 />
               </div>
 
               <div>
-                <Label className="text-white font-medium">NOA Document</Label>
+                <Label className="text-foreground font-medium">NOA Document</Label>
                 {data.noaDocument ? (
-                  <div className="mt-2 flex items-center gap-3 p-3 bg-[#0A1628] rounded-lg border border-[#1B3A5A]">
-                    <FileText className="w-5 h-5 text-[#00D4FF]" />
-                    <span className="text-white text-sm truncate flex-1">
+                  <div className="mt-2 flex items-center gap-3 p-3 bg-background rounded-lg border border-border">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <span className="text-foreground text-sm truncate flex-1">
                       {data.noaDocument.fileName}
                     </span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={removeNoaDocument}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -192,7 +186,7 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
                   <Button
                     variant="outline"
                     onClick={() => noaInputRef.current?.click()}
-                    className="mt-2 w-full border-[#1B3A5A] text-[#8B9DB5] hover:bg-[#1B3A5A] hover:text-white"
+                    className="mt-2 w-full border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                     data-testid="upload-noa-button"
                   >
                     <Upload className="w-4 h-4 mr-2" />
@@ -213,21 +207,21 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
       </div>
 
       {/* Banking Information */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
-        <h3 className="text-lg font-semibold text-white mb-6">Banking Information</h3>
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Banking Information</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Bank Name */}
           <div className="md:col-span-2">
-            <Label htmlFor="bankName" className="text-white font-medium">
-              Bank Name <span className="text-red-400">*</span>
+            <Label htmlFor="bankName" className="text-foreground font-medium">
+              Bank Name <span className="text-destructive">*</span>
             </Label>
             <Input
               id="bankName"
               value={data.bankName}
               onChange={(e) => handleInputChange('bankName', e.target.value)}
               placeholder="Enter bank name"
-              className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+              className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
               data-testid="bank-name-input"
             />
           </div>
@@ -235,8 +229,8 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
           {/* Transit Number (Canada) */}
           {showCanadian && (
             <div>
-              <Label htmlFor="transitNumber" className="text-white font-medium">
-                Transit Number <span className="text-[#5A6B7D] text-sm">(Canada)</span>
+              <Label htmlFor="transitNumber" className="text-foreground font-medium">
+                Transit Number <span className="text-muted-foreground text-sm">(Canada)</span>
               </Label>
               <Input
                 id="transitNumber"
@@ -244,7 +238,7 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
                 onChange={(e) => handleInputChange('transitNumber', e.target.value)}
                 placeholder="5-digit transit number"
                 maxLength={5}
-                className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                 data-testid="transit-number-input"
               />
             </div>
@@ -253,8 +247,8 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
           {/* Institution Number (Canada) */}
           {showCanadian && (
             <div>
-              <Label htmlFor="institutionNumber" className="text-white font-medium">
-                Institution Number <span className="text-[#5A6B7D] text-sm">(Canada)</span>
+              <Label htmlFor="institutionNumber" className="text-foreground font-medium">
+                Institution Number <span className="text-muted-foreground text-sm">(Canada)</span>
               </Label>
               <Input
                 id="institutionNumber"
@@ -262,7 +256,7 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
                 onChange={(e) => handleInputChange('institutionNumber', e.target.value)}
                 placeholder="3-digit institution number"
                 maxLength={3}
-                className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                 data-testid="institution-number-input"
               />
             </div>
@@ -271,8 +265,8 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
           {/* ABA Routing Number (US) */}
           {showUS && (
             <div>
-              <Label htmlFor="abaRoutingNumber" className="text-white font-medium">
-                ABA Routing Number <span className="text-[#5A6B7D] text-sm">(US)</span>
+              <Label htmlFor="abaRoutingNumber" className="text-foreground font-medium">
+                ABA Routing Number <span className="text-muted-foreground text-sm">(US)</span>
               </Label>
               <Input
                 id="abaRoutingNumber"
@@ -280,7 +274,7 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
                 onChange={(e) => handleInputChange('abaRoutingNumber', e.target.value)}
                 placeholder="9-digit routing number"
                 maxLength={9}
-                className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                 data-testid="aba-routing-input"
               />
             </div>
@@ -288,8 +282,8 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
 
           {/* Account Number */}
           <div>
-            <Label htmlFor="accountNumber" className="text-white font-medium">
-              Account Number <span className="text-red-400">*</span>
+            <Label htmlFor="accountNumber" className="text-foreground font-medium">
+              Account Number <span className="text-destructive">*</span>
             </Label>
             <div className="relative mt-2">
               <Input
@@ -298,13 +292,13 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
                 value={data.accountNumber}
                 onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                 placeholder="Enter account number"
-                className="bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF] pr-10"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary pr-10"
                 data-testid="account-number-input"
               />
               <button
                 type="button"
                 onClick={() => setShowAccountNumber(!showAccountNumber)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6B7D] hover:text-[#8B9DB5]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <Eye className="w-4 h-4" />
               </button>
@@ -313,20 +307,20 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
 
           {/* Account Type */}
           <div>
-            <Label className="text-white font-medium">Account Type</Label>
+            <Label className="text-foreground font-medium">Account Type</Label>
             <Select 
               value={data.accountType} 
               onValueChange={(value) => handleInputChange('accountType', value)}
             >
               <SelectTrigger 
-                className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white focus:border-[#00D4FF]"
+                className="mt-2 bg-background border-border text-foreground focus:border-primary"
                 data-testid="account-type-select"
               >
                 <SelectValue placeholder="Select account type" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
+              <SelectContent className="bg-popover border-border">
                 {accountTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value} className="text-white hover:bg-[#1B3A5A]">
+                  <SelectItem key={type.value} value={type.value} className="text-popover-foreground hover:bg-muted">
                     {type.label}
                   </SelectItem>
                 ))}
@@ -336,20 +330,20 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
 
           {/* Currency */}
           <div>
-            <Label className="text-white font-medium">Currency</Label>
+            <Label className="text-foreground font-medium">Currency</Label>
             <Select 
               value={data.currency} 
               onValueChange={(value) => handleInputChange('currency', value)}
             >
               <SelectTrigger 
-                className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white focus:border-[#00D4FF]"
+                className="mt-2 bg-background border-border text-foreground focus:border-primary"
                 data-testid="currency-select"
               >
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
+              <SelectContent className="bg-popover border-border">
                 {currencies.map((curr) => (
-                  <SelectItem key={curr.value} value={curr.value} className="text-white hover:bg-[#1B3A5A]">
+                  <SelectItem key={curr.value} value={curr.value} className="text-popover-foreground hover:bg-muted">
                     {curr.label}
                   </SelectItem>
                 ))}
@@ -361,9 +355,9 @@ const PaymentSetupStep = ({ data, country, onChange }) => {
 
       {/* Warning for incomplete info */}
       {(!data.bankName || !data.accountNumber || !data.paymentMethod) && (
-        <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-          <p className="text-amber-400 text-sm">
+        <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+          <p className="text-yellow-600 dark:text-yellow-400 text-sm">
             Please complete all required fields to enable payment processing.
           </p>
         </div>

@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, Image, Building2, X } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 
 const canadianProvinces = [
   'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 
@@ -100,18 +100,18 @@ const CompanyInfoStep = ({ data, onChange }) => {
     <div className="space-y-8" data-testid="company-info-step">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Building2 className="w-7 h-7 text-[#00D4FF]" />
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <i className="fas fa-building text-primary"></i>
           Company Information
         </h2>
-        <p className="text-[#8B9DB5] mt-2">
+        <p className="text-muted-foreground mt-2">
           Enter your company details and upload your logo
         </p>
       </div>
 
       {/* Logo Upload */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
-        <Label className="text-white font-medium mb-4 block">Company Logo</Label>
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <Label className="text-foreground font-medium mb-4 block">Company Logo</Label>
         <div className="flex items-start gap-6">
           {/* Logo Preview */}
           <div className="flex-shrink-0">
@@ -120,12 +120,12 @@ const CompanyInfoStep = ({ data, onChange }) => {
                 <img 
                   src={data.logoPreview} 
                   alt="Company logo" 
-                  className="w-24 h-24 object-contain rounded-lg bg-white p-2"
+                  className="w-24 h-24 object-contain rounded-lg bg-muted p-2"
                   data-testid="logo-preview"
                 />
                 <button
                   onClick={removeLogo}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600"
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-destructive rounded-full flex items-center justify-center text-destructive-foreground hover:bg-destructive/90"
                   data-testid="remove-logo-button"
                 >
                   <X className="w-4 h-4" />
@@ -133,10 +133,10 @@ const CompanyInfoStep = ({ data, onChange }) => {
               </div>
             ) : (
               <div 
-                className="w-24 h-24 rounded-lg bg-gradient-to-br from-[#00D4FF] to-[#0066FF] flex items-center justify-center"
+                className="w-24 h-24 rounded-lg bg-primary flex items-center justify-center"
                 data-testid="initials-avatar"
               >
-                <span className="text-2xl font-bold text-white">{getInitials()}</span>
+                <span className="text-2xl font-bold text-primary-foreground">{getInitials()}</span>
               </div>
             )}
           </div>
@@ -145,8 +145,8 @@ const CompanyInfoStep = ({ data, onChange }) => {
           <div 
             className={`flex-1 border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer ${
               dragActive 
-                ? 'border-[#00D4FF] bg-[#00D4FF]/10' 
-                : 'border-[#1B3A5A] hover:border-[#00D4FF]/50'
+                ? 'border-primary bg-primary/10' 
+                : 'border-border hover:border-primary/50'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -164,15 +164,15 @@ const CompanyInfoStep = ({ data, onChange }) => {
               data-testid="logo-file-input"
             />
             <div className="text-center">
-              <Upload className="w-10 h-10 text-[#00D4FF] mx-auto mb-3" />
-              <p className="text-white font-medium">
+              <Upload className="w-10 h-10 text-primary mx-auto mb-3" />
+              <p className="text-foreground font-medium">
                 Drag and drop your logo here
               </p>
-              <p className="text-[#8B9DB5] text-sm mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 or click to browse
               </p>
-              <p className="text-[#5A6B7D] text-xs mt-3">
-                PNG, JPG, SVG • Max 5MB
+              <p className="text-muted-foreground/70 text-xs mt-3">
+                PNG, JPG, SVG - Max 5MB
               </p>
             </div>
           </div>
@@ -183,57 +183,57 @@ const CompanyInfoStep = ({ data, onChange }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Legal Company Name */}
         <div className="md:col-span-2">
-          <Label htmlFor="legalName" className="text-white font-medium">
-            Legal Company Name <span className="text-red-400">*</span>
+          <Label htmlFor="legalName" className="text-foreground font-medium">
+            Legal Company Name <span className="text-destructive">*</span>
           </Label>
           <Input
             id="legalName"
             value={data.legalName}
             onChange={(e) => handleInputChange('legalName', e.target.value)}
             placeholder="Enter your legal company name"
-            className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="legal-name-input"
           />
         </div>
 
         {/* DBA Name */}
         <div className="md:col-span-2">
-          <Label htmlFor="dbaName" className="text-white font-medium">
-            Operating/DBA Name <span className="text-[#5A6B7D] text-sm">(if different)</span>
+          <Label htmlFor="dbaName" className="text-foreground font-medium">
+            Operating/DBA Name <span className="text-muted-foreground text-sm">(if different)</span>
           </Label>
           <Input
             id="dbaName"
             value={data.dbaName}
             onChange={(e) => handleInputChange('dbaName', e.target.value)}
             placeholder="Enter operating or DBA name"
-            className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="dba-name-input"
           />
         </div>
 
         {/* Company Type */}
         <div>
-          <Label className="text-white font-medium">
-            Company Type <span className="text-red-400">*</span>
+          <Label className="text-foreground font-medium">
+            Company Type <span className="text-destructive">*</span>
           </Label>
           <Select 
             value={data.companyType} 
             onValueChange={(value) => handleInputChange('companyType', value)}
           >
             <SelectTrigger 
-              className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white focus:border-[#00D4FF]"
+              className="mt-2 bg-card border-border text-foreground focus:border-primary"
               data-testid="company-type-select"
             >
               <SelectValue placeholder="Select company type" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
-              <SelectItem value="trucking_company" className="text-white hover:bg-[#1B3A5A]">
+            <SelectContent className="bg-popover border-border">
+              <SelectItem value="trucking_company" className="text-popover-foreground hover:bg-muted">
                 Trucking Company
               </SelectItem>
-              <SelectItem value="owner_operator" className="text-white hover:bg-[#1B3A5A]">
+              <SelectItem value="owner_operator" className="text-popover-foreground hover:bg-muted">
                 Owner-Operator
               </SelectItem>
-              <SelectItem value="both" className="text-white hover:bg-[#1B3A5A]">
+              <SelectItem value="both" className="text-popover-foreground hover:bg-muted">
                 Both
               </SelectItem>
             </SelectContent>
@@ -242,8 +242,8 @@ const CompanyInfoStep = ({ data, onChange }) => {
 
         {/* Country */}
         <div>
-          <Label className="text-white font-medium">
-            Country <span className="text-red-400">*</span>
+          <Label className="text-foreground font-medium">
+            Country <span className="text-destructive">*</span>
           </Label>
           <Select 
             value={data.country} 
@@ -253,19 +253,19 @@ const CompanyInfoStep = ({ data, onChange }) => {
             }}
           >
             <SelectTrigger 
-              className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white focus:border-[#00D4FF]"
+              className="mt-2 bg-card border-border text-foreground focus:border-primary"
               data-testid="country-select"
             >
               <SelectValue placeholder="Select country" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
-              <SelectItem value="Canada" className="text-white hover:bg-[#1B3A5A]">
+            <SelectContent className="bg-popover border-border">
+              <SelectItem value="Canada" className="text-popover-foreground hover:bg-muted">
                 Canada
               </SelectItem>
-              <SelectItem value="USA" className="text-white hover:bg-[#1B3A5A]">
+              <SelectItem value="USA" className="text-popover-foreground hover:bg-muted">
                 USA
               </SelectItem>
-              <SelectItem value="Both" className="text-white hover:bg-[#1B3A5A]">
+              <SelectItem value="Both" className="text-popover-foreground hover:bg-muted">
                 Both (Cross-Border)
               </SelectItem>
             </SelectContent>
@@ -274,7 +274,7 @@ const CompanyInfoStep = ({ data, onChange }) => {
 
         {/* Province/State */}
         <div>
-          <Label className="text-white font-medium">
+          <Label className="text-foreground font-medium">
             {data.country === 'USA' ? 'State' : 'Province/State'}
           </Label>
           <Select 
@@ -283,14 +283,14 @@ const CompanyInfoStep = ({ data, onChange }) => {
             disabled={!data.country}
           >
             <SelectTrigger 
-              className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white focus:border-[#00D4FF] disabled:opacity-50"
+              className="mt-2 bg-card border-border text-foreground focus:border-primary disabled:opacity-50"
               data-testid="province-select"
             >
               <SelectValue placeholder={data.country ? "Select province/state" : "Select country first"} />
             </SelectTrigger>
-            <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A] max-h-60">
+            <SelectContent className="bg-popover border-border max-h-60">
               {getProvinceOptions().map((prov) => (
-                <SelectItem key={prov} value={prov} className="text-white hover:bg-[#1B3A5A]">
+                <SelectItem key={prov} value={prov} className="text-popover-foreground hover:bg-muted">
                   {prov}
                 </SelectItem>
               ))}
@@ -300,8 +300,8 @@ const CompanyInfoStep = ({ data, onChange }) => {
 
         {/* Phone */}
         <div>
-          <Label htmlFor="phone" className="text-white font-medium">
-            Phone <span className="text-red-400">*</span>
+          <Label htmlFor="phone" className="text-foreground font-medium">
+            Phone <span className="text-destructive">*</span>
           </Label>
           <Input
             id="phone"
@@ -309,15 +309,15 @@ const CompanyInfoStep = ({ data, onChange }) => {
             value={data.phone}
             onChange={(e) => handleInputChange('phone', e.target.value)}
             placeholder="(555) 123-4567"
-            className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="phone-input"
           />
         </div>
 
         {/* Email */}
         <div>
-          <Label htmlFor="email" className="text-white font-medium">
-            Email <span className="text-red-400">*</span>
+          <Label htmlFor="email" className="text-foreground font-medium">
+            Email <span className="text-destructive">*</span>
           </Label>
           <Input
             id="email"
@@ -325,14 +325,14 @@ const CompanyInfoStep = ({ data, onChange }) => {
             value={data.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
             placeholder="contact@company.com"
-            className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="email-input"
           />
         </div>
 
         {/* Website */}
         <div>
-          <Label htmlFor="website" className="text-white font-medium">
+          <Label htmlFor="website" className="text-foreground font-medium">
             Website
           </Label>
           <Input
@@ -341,7 +341,7 @@ const CompanyInfoStep = ({ data, onChange }) => {
             value={data.website}
             onChange={(e) => handleInputChange('website', e.target.value)}
             placeholder="https://www.company.com"
-            className="mt-2 bg-[#0D1B2A] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="website-input"
           />
         </div>

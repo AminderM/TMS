@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { 
   X, FileText, Check, AlertTriangle, ChevronRight, 
@@ -42,7 +41,6 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
     message: '',
   });
   const [isSending, setIsSending] = useState(false);
-  const [pdfGenerated, setPdfGenerated] = useState(false);
 
   const { companyInfo, documents } = profileData;
 
@@ -104,8 +102,6 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
         recipient: recipientInfo,
       });
 
-      setPdfGenerated(true);
-
       // Prepare email
       const subject = encodeURIComponent(`Carrier Document Package - ${companyInfo.legalName}`);
       const body = encodeURIComponent(
@@ -142,20 +138,20 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Select Documents</h3>
-        <p className="text-[#8B9DB5] text-sm">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Select Documents</h3>
+        <p className="text-muted-foreground text-sm">
           Choose which documents to include in your package
         </p>
       </div>
 
       <div className="flex justify-between items-center">
-        <span className="text-[#8B9DB5] text-sm">{selectedCount} documents selected</span>
+        <span className="text-muted-foreground text-sm">{selectedCount} documents selected</span>
         <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleSelectAll}
-            className="text-[#00D4FF] hover:bg-[#00D4FF]/10"
+            className="text-primary hover:bg-primary/10"
           >
             Select All
           </Button>
@@ -163,7 +159,7 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
             variant="ghost"
             size="sm"
             onClick={handleDeselectAll}
-            className="text-[#8B9DB5] hover:bg-[#1B3A5A]"
+            className="text-muted-foreground hover:bg-muted"
           >
             Deselect All
           </Button>
@@ -182,37 +178,37 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
               onClick={() => isUploaded && handleToggleDoc(doc.id)}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                 !isUploaded
-                  ? 'border-[#1B3A5A] bg-[#0A1628]/50 opacity-50 cursor-not-allowed'
+                  ? 'border-border bg-muted/50 opacity-50 cursor-not-allowed'
                   : isExpired
-                  ? 'border-red-500/30 bg-red-500/5 cursor-not-allowed'
+                  ? 'border-destructive/30 bg-destructive/5 cursor-not-allowed'
                   : isSelected
-                  ? 'border-[#00D4FF] bg-[#00D4FF]/10 cursor-pointer'
-                  : 'border-[#1B3A5A] bg-[#0A1628] cursor-pointer hover:border-[#2A4A6A]'
+                  ? 'border-primary bg-primary/10 cursor-pointer'
+                  : 'border-border bg-background cursor-pointer hover:border-primary/50'
               }`}
               data-testid={`select-doc-${doc.id}`}
             >
               <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                 isSelected
-                  ? 'border-[#00D4FF] bg-[#00D4FF]'
-                  : 'border-[#5A6B7D]'
+                  ? 'border-primary bg-primary'
+                  : 'border-muted-foreground'
               }`}>
-                {isSelected && <Check className="w-3 h-3 text-[#0A1628]" />}
+                {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
               </div>
               <FileText className={`w-5 h-5 ${
-                isExpired ? 'text-red-400' : isSelected ? 'text-[#00D4FF]' : 'text-[#5A6B7D]'
+                isExpired ? 'text-destructive' : isSelected ? 'text-primary' : 'text-muted-foreground'
               }`} />
               <span className={`flex-1 ${
-                isExpired ? 'text-red-400' : 'text-white'
+                isExpired ? 'text-destructive' : 'text-foreground'
               }`}>
                 {doc.name}
               </span>
               {!isUploaded && (
-                <Badge className="bg-[#1B3A5A] text-[#5A6B7D] text-xs">
+                <Badge className="bg-muted text-muted-foreground text-xs">
                   Not Uploaded
                 </Badge>
               )}
               {isExpired && (
-                <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 text-xs">
+                <Badge className="bg-destructive/20 text-destructive border border-destructive/30 text-xs">
                   <AlertTriangle className="w-3 h-3 mr-1" /> Expired
                 </Badge>
               )}
@@ -226,44 +222,44 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Recipient Information</h3>
-        <p className="text-[#8B9DB5] text-sm">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Recipient Information</h3>
+        <p className="text-muted-foreground text-sm">
           Enter the recipient&apos;s details
         </p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="recipientName" className="text-white font-medium">
-            Recipient Name <span className="text-red-400">*</span>
+          <Label htmlFor="recipientName" className="text-foreground font-medium">
+            Recipient Name <span className="text-destructive">*</span>
           </Label>
           <Input
             id="recipientName"
             value={recipientInfo.name}
             onChange={(e) => setRecipientInfo(prev => ({ ...prev, name: e.target.value }))}
             placeholder="John Smith"
-            className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="recipient-name-input"
           />
         </div>
 
         <div>
-          <Label htmlFor="recipientCompany" className="text-white font-medium">
-            Company <span className="text-red-400">*</span>
+          <Label htmlFor="recipientCompany" className="text-foreground font-medium">
+            Company <span className="text-destructive">*</span>
           </Label>
           <Input
             id="recipientCompany"
             value={recipientInfo.company}
             onChange={(e) => setRecipientInfo(prev => ({ ...prev, company: e.target.value }))}
             placeholder="ABC Logistics"
-            className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="recipient-company-input"
           />
         </div>
 
         <div>
-          <Label htmlFor="recipientEmail" className="text-white font-medium">
-            Email <span className="text-red-400">*</span>
+          <Label htmlFor="recipientEmail" className="text-foreground font-medium">
+            Email <span className="text-destructive">*</span>
           </Label>
           <Input
             id="recipientEmail"
@@ -271,14 +267,14 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
             value={recipientInfo.email}
             onChange={(e) => setRecipientInfo(prev => ({ ...prev, email: e.target.value }))}
             placeholder="john@abclogistics.com"
-            className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+            className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
             data-testid="recipient-email-input"
           />
         </div>
 
         <div>
-          <Label htmlFor="recipientMessage" className="text-white font-medium">
-            Message <span className="text-[#5A6B7D] text-sm">(optional, max 200 chars)</span>
+          <Label htmlFor="recipientMessage" className="text-foreground font-medium">
+            Message <span className="text-muted-foreground text-sm">(optional, max 200 chars)</span>
           </Label>
           <Textarea
             id="recipientMessage"
@@ -289,10 +285,10 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
             }))}
             placeholder="Add a personal message..."
             maxLength={200}
-            className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF] resize-none h-24"
+            className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary resize-none h-24"
             data-testid="recipient-message-input"
           />
-          <div className="text-right text-[#5A6B7D] text-xs mt-1">
+          <div className="text-right text-muted-foreground text-xs mt-1">
             {recipientInfo.message.length}/200
           </div>
         </div>
@@ -303,46 +299,46 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Review & Send</h3>
-        <p className="text-[#8B9DB5] text-sm">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Review & Send</h3>
+        <p className="text-muted-foreground text-sm">
           Review your package before sending
         </p>
       </div>
 
       {/* Summary */}
-      <div className="bg-[#0A1628] rounded-lg p-4 border border-[#1B3A5A]">
-        <h4 className="text-white font-medium mb-4">Package Summary</h4>
+      <div className="bg-background rounded-lg p-4 border border-border">
+        <h4 className="text-foreground font-medium mb-4">Package Summary</h4>
         
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-[#8B9DB5]">From:</span>
-            <span className="text-white">{companyInfo.legalName}</span>
+            <span className="text-muted-foreground">From:</span>
+            <span className="text-foreground">{companyInfo.legalName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#8B9DB5]">To:</span>
-            <span className="text-white">{recipientInfo.name} ({recipientInfo.company})</span>
+            <span className="text-muted-foreground">To:</span>
+            <span className="text-foreground">{recipientInfo.name} ({recipientInfo.company})</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#8B9DB5]">Email:</span>
-            <span className="text-white">{recipientInfo.email}</span>
+            <span className="text-muted-foreground">Email:</span>
+            <span className="text-foreground">{recipientInfo.email}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#8B9DB5]">Documents:</span>
-            <span className="text-[#00D4FF]">{selectedCount} files</span>
+            <span className="text-muted-foreground">Documents:</span>
+            <span className="text-primary">{selectedCount} files</span>
           </div>
         </div>
       </div>
 
       {/* Documents List */}
-      <div className="bg-[#0A1628] rounded-lg p-4 border border-[#1B3A5A]">
-        <h4 className="text-white font-medium mb-3">Included Documents</h4>
+      <div className="bg-background rounded-lg p-4 border border-border">
+        <h4 className="text-foreground font-medium mb-3">Included Documents</h4>
         <div className="space-y-2">
           {getDocumentList()
             .filter(doc => selectedDocs[doc.id])
             .map(doc => (
               <div key={doc.id} className="flex items-center gap-2 text-sm">
-                <Check className="w-4 h-4 text-[#00D4FF]" />
-                <span className="text-[#8B9DB5]">{doc.name}</span>
+                <Check className="w-4 h-4 text-primary" />
+                <span className="text-muted-foreground">{doc.name}</span>
               </div>
             ))}
         </div>
@@ -350,16 +346,16 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
 
       {/* Message Preview */}
       {recipientInfo.message && (
-        <div className="bg-[#0A1628] rounded-lg p-4 border border-[#1B3A5A]">
-          <h4 className="text-white font-medium mb-2">Personal Message</h4>
-          <p className="text-[#8B9DB5] text-sm italic">&ldquo;{recipientInfo.message}&rdquo;</p>
+        <div className="bg-background rounded-lg p-4 border border-border">
+          <h4 className="text-foreground font-medium mb-2">Personal Message</h4>
+          <p className="text-muted-foreground text-sm italic">&ldquo;{recipientInfo.message}&rdquo;</p>
         </div>
       )}
 
       {/* Info Note */}
-      <div className="flex items-start gap-3 p-4 bg-[#00D4FF]/5 border border-[#00D4FF]/20 rounded-lg">
-        <Mail className="w-5 h-5 text-[#00D4FF] flex-shrink-0 mt-0.5" />
-        <p className="text-[#8B9DB5] text-sm">
+      <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+        <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+        <p className="text-muted-foreground text-sm">
           Clicking &ldquo;Send Package&rdquo; will generate a PDF and open your email client with
           the recipient&apos;s email pre-filled. Attach the downloaded PDF to complete sending.
         </p>
@@ -377,18 +373,18 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0D1B2A] rounded-xl max-w-lg w-full border border-[#1B3A5A] overflow-hidden" data-testid="send-package-modal">
+      <div className="bg-card rounded-xl max-w-lg w-full border border-border overflow-hidden" data-testid="send-package-modal">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#1B3A5A]">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Send className="w-5 h-5 text-[#00D4FF]" />
-            <h2 className="text-lg font-semibold text-white">Send Document Package</h2>
+            <Send className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Send Document Package</h2>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="text-[#8B9DB5] hover:text-white hover:bg-[#1B3A5A]"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted"
             data-testid="close-modal-button"
           >
             <X className="w-5 h-5" />
@@ -396,28 +392,28 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
         </div>
 
         {/* Step Indicator */}
-        <div className="px-4 py-3 border-b border-[#1B3A5A]">
+        <div className="px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             {[1, 2, 3].map((step) => (
               <React.Fragment key={step}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   step === currentStep
-                    ? 'bg-[#00D4FF] text-[#0A1628]'
+                    ? 'bg-primary text-primary-foreground'
                     : step < currentStep
-                    ? 'bg-[#00D4FF]/20 text-[#00D4FF]'
-                    : 'bg-[#1B3A5A] text-[#5A6B7D]'
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-muted text-muted-foreground'
                 }`}>
                   {step < currentStep ? <Check className="w-4 h-4" /> : step}
                 </div>
                 {step < 3 && (
                   <div className={`flex-1 h-0.5 ${
-                    step < currentStep ? 'bg-[#00D4FF]' : 'bg-[#1B3A5A]'
+                    step < currentStep ? 'bg-primary' : 'bg-muted'
                   }`} />
                 )}
               </React.Fragment>
             ))}
           </div>
-          <div className="flex justify-between mt-2 text-xs text-[#8B9DB5]">
+          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
             <span>Select Docs</span>
             <span>Recipient</span>
             <span>Send</span>
@@ -432,12 +428,12 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between p-4 border-t border-[#1B3A5A]">
+        <div className="flex justify-between p-4 border-t border-border">
           <Button
             variant="outline"
             onClick={() => setCurrentStep(prev => prev - 1)}
             disabled={currentStep === 1}
-            className="border-[#1B3A5A] text-[#8B9DB5] hover:bg-[#1B3A5A] hover:text-white disabled:opacity-50"
+            className="border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
             data-testid="modal-previous-button"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
@@ -448,7 +444,7 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
             <Button
               onClick={() => setCurrentStep(prev => prev + 1)}
               disabled={!canProceed()}
-              className="bg-[#00D4FF] text-[#0A1628] hover:bg-[#00B8E0] disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               data-testid="modal-next-button"
             >
               Next
@@ -458,7 +454,7 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
             <Button
               onClick={handleSend}
               disabled={isSending}
-              className="bg-[#00D4FF] text-[#0A1628] hover:bg-[#00B8E0] disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               data-testid="modal-send-button"
             >
               {isSending ? (

@@ -4,7 +4,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Truck, Plus, X, MapPin, 
   Container, Snowflake, Fuel, Package, 
@@ -69,22 +68,22 @@ const FleetLanesStep = ({ data, onChange }) => {
     <div className="space-y-8" data-testid="fleet-lanes-step">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Truck className="w-7 h-7 text-[#00D4FF]" />
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <Truck className="w-7 h-7 text-primary" />
           Fleet & Lanes
         </h2>
-        <p className="text-[#8B9DB5] mt-2">
+        <p className="text-muted-foreground mt-2">
           Tell us about your fleet and preferred operating lanes
         </p>
       </div>
 
       {/* Fleet Size */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
-        <h3 className="text-lg font-semibold text-white mb-6">Fleet Size</h3>
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Fleet Size</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label htmlFor="numberOfTrucks" className="text-white font-medium">
+            <Label htmlFor="numberOfTrucks" className="text-foreground font-medium">
               Number of Trucks
             </Label>
             <Input
@@ -94,13 +93,13 @@ const FleetLanesStep = ({ data, onChange }) => {
               value={data.numberOfTrucks}
               onChange={(e) => handleInputChange('numberOfTrucks', e.target.value)}
               placeholder="e.g., 10"
-              className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+              className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
               data-testid="trucks-count-input"
             />
           </div>
 
           <div>
-            <Label htmlFor="numberOfTrailers" className="text-white font-medium">
+            <Label htmlFor="numberOfTrailers" className="text-foreground font-medium">
               Number of Trailers
             </Label>
             <Input
@@ -110,7 +109,7 @@ const FleetLanesStep = ({ data, onChange }) => {
               value={data.numberOfTrailers}
               onChange={(e) => handleInputChange('numberOfTrailers', e.target.value)}
               placeholder="e.g., 15"
-              className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+              className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
               data-testid="trailers-count-input"
             />
           </div>
@@ -118,8 +117,8 @@ const FleetLanesStep = ({ data, onChange }) => {
       </div>
 
       {/* Equipment Types */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
-        <h3 className="text-lg font-semibold text-white mb-6">Equipment Types</h3>
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Equipment Types</h3>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {equipmentTypes.map((equipment) => {
@@ -133,16 +132,16 @@ const FleetLanesStep = ({ data, onChange }) => {
                 onClick={() => handleEquipmentToggle(equipment.id)}
                 className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
                   isSelected
-                    ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF]'
-                    : 'border-[#1B3A5A] bg-[#0A1628] text-[#8B9DB5] hover:border-[#2A4A6A]'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/50'
                 }`}
                 data-testid={`equipment-${equipment.id}`}
               >
                 <Icon className="w-8 h-8" />
                 <span className="text-sm font-medium">{equipment.name}</span>
                 {isSelected && (
-                  <div className="w-4 h-4 rounded-full bg-[#00D4FF] flex items-center justify-center">
-                    <svg className="w-3 h-3 text-[#0A1628]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                    <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -154,51 +153,51 @@ const FleetLanesStep = ({ data, onChange }) => {
       </div>
 
       {/* Capabilities */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
-        <h3 className="text-lg font-semibold text-white mb-6">Capabilities</h3>
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Capabilities</h3>
         
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-[#0A1628] rounded-lg border border-[#1B3A5A]">
+          <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
             <div>
-              <Label className="text-white font-medium">Hazmat Capable?</Label>
-              <p className="text-[#8B9DB5] text-sm mt-1">
+              <Label className="text-foreground font-medium">Hazmat Capable?</Label>
+              <p className="text-muted-foreground text-sm mt-1">
                 Can your fleet transport hazardous materials?
               </p>
             </div>
             <Switch
               checked={data.hazmatCapable}
               onCheckedChange={(checked) => handleInputChange('hazmatCapable', checked)}
-              className="data-[state=checked]:bg-[#00D4FF]"
+              className="data-[state=checked]:bg-primary"
               data-testid="hazmat-switch"
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-[#0A1628] rounded-lg border border-[#1B3A5A]">
+          <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
             <div>
-              <Label className="text-white font-medium">Cross-border Capable?</Label>
-              <p className="text-[#8B9DB5] text-sm mt-1">
+              <Label className="text-foreground font-medium">Cross-border Capable?</Label>
+              <p className="text-muted-foreground text-sm mt-1">
                 Can your fleet operate across US-Canada border?
               </p>
             </div>
             <Switch
               checked={data.crossBorderCapable}
               onCheckedChange={(checked) => handleInputChange('crossBorderCapable', checked)}
-              className="data-[state=checked]:bg-[#00D4FF]"
+              className="data-[state=checked]:bg-primary"
               data-testid="crossborder-switch"
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-[#0A1628] rounded-lg border border-[#1B3A5A]">
+          <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
             <div>
-              <Label className="text-white font-medium">24/7 Dispatch?</Label>
-              <p className="text-[#8B9DB5] text-sm mt-1">
+              <Label className="text-foreground font-medium">24/7 Dispatch?</Label>
+              <p className="text-muted-foreground text-sm mt-1">
                 Do you have round-the-clock dispatch available?
               </p>
             </div>
             <Switch
               checked={data.is24x7Dispatch}
               onCheckedChange={(checked) => handleInputChange('is24x7Dispatch', checked)}
-              className="data-[state=checked]:bg-[#00D4FF]"
+              className="data-[state=checked]:bg-primary"
               data-testid="dispatch-247-switch"
             />
           </div>
@@ -206,24 +205,24 @@ const FleetLanesStep = ({ data, onChange }) => {
       </div>
 
       {/* ELD Provider */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
-        <h3 className="text-lg font-semibold text-white mb-6">ELD Provider</h3>
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-6">ELD Provider</h3>
         
         <div>
-          <Label className="text-white font-medium">Select your ELD provider</Label>
+          <Label className="text-foreground font-medium">Select your ELD provider</Label>
           <Select 
             value={data.eldProvider} 
             onValueChange={(value) => handleInputChange('eldProvider', value)}
           >
             <SelectTrigger 
-              className="mt-2 bg-[#0A1628] border-[#1B3A5A] text-white focus:border-[#00D4FF]"
+              className="mt-2 bg-background border-border text-foreground focus:border-primary"
               data-testid="eld-provider-select"
             >
               <SelectValue placeholder="Select ELD provider" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
+            <SelectContent className="bg-popover border-border">
               {eldProviders.map((provider) => (
-                <SelectItem key={provider} value={provider} className="text-white hover:bg-[#1B3A5A]">
+                <SelectItem key={provider} value={provider} className="text-popover-foreground hover:bg-muted">
                   {provider}
                 </SelectItem>
               ))}
@@ -233,13 +232,13 @@ const FleetLanesStep = ({ data, onChange }) => {
       </div>
 
       {/* Preferred Lanes */}
-      <div className="bg-[#0D1B2A] rounded-xl p-6 border border-[#1B3A5A]">
+      <div className="bg-card rounded-xl p-6 border border-border">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-white">Preferred Lanes</h3>
-            <p className="text-[#8B9DB5] text-sm mt-1">Add up to 5 preferred operating lanes</p>
+            <h3 className="text-lg font-semibold text-foreground">Preferred Lanes</h3>
+            <p className="text-muted-foreground text-sm mt-1">Add up to 5 preferred operating lanes</p>
           </div>
-          <span className="text-[#8B9DB5] text-sm">
+          <span className="text-muted-foreground text-sm">
             {(data.preferredLanes || []).length}/5 lanes
           </span>
         </div>
@@ -250,20 +249,20 @@ const FleetLanesStep = ({ data, onChange }) => {
             {data.preferredLanes.map((lane) => (
               <div
                 key={lane.id}
-                className="flex items-center gap-3 p-3 bg-[#0A1628] rounded-lg border border-[#1B3A5A]"
+                className="flex items-center gap-3 p-3 bg-background rounded-lg border border-border"
               >
-                <MapPin className="w-5 h-5 text-[#00D4FF]" />
+                <MapPin className="w-5 h-5 text-primary" />
                 <div className="flex-1">
-                  <span className="text-white">{lane.origin}</span>
-                  <span className="text-[#5A6B7D] mx-2">→</span>
-                  <span className="text-white">{lane.destination}</span>
+                  <span className="text-foreground">{lane.origin}</span>
+                  <span className="text-muted-foreground mx-2">→</span>
+                  <span className="text-foreground">{lane.destination}</span>
                 </div>
-                <span className="text-[#8B9DB5] text-sm uppercase">{lane.serviceType}</span>
+                <span className="text-muted-foreground text-sm uppercase">{lane.serviceType}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveLane(lane.id)}
-                  className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   data-testid={`remove-lane-${lane.id}`}
                 >
                   <X className="w-4 h-4" />
@@ -281,7 +280,7 @@ const FleetLanesStep = ({ data, onChange }) => {
                 value={newLane.origin}
                 onChange={(e) => setNewLane({ ...newLane, origin: e.target.value })}
                 placeholder="Origin city"
-                className="bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                 data-testid="lane-origin-input"
               />
             </div>
@@ -290,7 +289,7 @@ const FleetLanesStep = ({ data, onChange }) => {
                 value={newLane.destination}
                 onChange={(e) => setNewLane({ ...newLane, destination: e.target.value })}
                 placeholder="Destination city"
-                className="bg-[#0A1628] border-[#1B3A5A] text-white placeholder:text-[#5A6B7D] focus:border-[#00D4FF]"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
                 data-testid="lane-destination-input"
               />
             </div>
@@ -298,19 +297,19 @@ const FleetLanesStep = ({ data, onChange }) => {
               value={newLane.serviceType} 
               onValueChange={(value) => setNewLane({ ...newLane, serviceType: value })}
             >
-              <SelectTrigger className="w-32 bg-[#0A1628] border-[#1B3A5A] text-white focus:border-[#00D4FF]">
+              <SelectTrigger className="w-32 bg-background border-border text-foreground focus:border-primary">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0D1B2A] border-[#1B3A5A]">
-                <SelectItem value="ftl" className="text-white hover:bg-[#1B3A5A]">FTL</SelectItem>
-                <SelectItem value="ltl" className="text-white hover:bg-[#1B3A5A]">LTL</SelectItem>
-                <SelectItem value="both" className="text-white hover:bg-[#1B3A5A]">Both</SelectItem>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="ftl" className="text-popover-foreground hover:bg-muted">FTL</SelectItem>
+                <SelectItem value="ltl" className="text-popover-foreground hover:bg-muted">LTL</SelectItem>
+                <SelectItem value="both" className="text-popover-foreground hover:bg-muted">Both</SelectItem>
               </SelectContent>
             </Select>
             <Button
               onClick={handleAddLane}
               disabled={!newLane.origin || !newLane.destination}
-              className="bg-[#00D4FF] text-[#0A1628] hover:bg-[#00B8E0] disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               data-testid="add-lane-button"
             >
               <Plus className="w-4 h-4 mr-2" />

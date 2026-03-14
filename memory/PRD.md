@@ -100,7 +100,9 @@ Build a Carrier Profile Builder inside the TMS SaaS application. The feature sho
 - ✅ PDF generation using jsPDF
 - ✅ Email client integration (mailto:)
 - ✅ Package tracking table
-- ✅ Brand colors implemented (#0A1628, #00D4FF)
+- ✅ **TMS Theme Integration** - Uses same theme as TMS app
+- ✅ **Dark/Light Mode Toggle** - Sun/Moon button in wizard header
+- ✅ TMS Colors: Light (white bg, black text, red primary) / Dark (black bg, white text, red primary)
 - ✅ Mobile responsive design
 - ✅ All data-testid attributes for testing
 

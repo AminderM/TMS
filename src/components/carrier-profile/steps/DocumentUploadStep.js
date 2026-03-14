@@ -8,7 +8,7 @@ import {
   FileText, Upload, Check, AlertTriangle, X, 
   Calendar as CalendarIcon, Eye, Trash2 
 } from 'lucide-react';
-import { format, differenceInDays, isPast, addDays } from 'date-fns';
+import { format, differenceInDays, isPast } from 'date-fns';
 
 const canadianDocuments = [
   { id: 'nsc_certificate', name: 'NSC Certificate', description: 'National Safety Code Certificate - Required for commercial carriers', required: true },
@@ -107,25 +107,25 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
     switch (status) {
       case 'uploaded':
         return (
-          <Badge className="bg-[#00D4FF]/20 text-[#00D4FF] border border-[#00D4FF]/30">
+          <Badge className="bg-primary/20 text-primary border border-primary/30">
             <Check className="w-3 h-3 mr-1" /> Uploaded
           </Badge>
         );
       case 'expired':
         return (
-          <Badge className="bg-red-500/20 text-red-400 border border-red-500/30">
+          <Badge className="bg-destructive/20 text-destructive border border-destructive/30">
             <AlertTriangle className="w-3 h-3 mr-1" /> Expired
           </Badge>
         );
       case 'expiring_soon':
         return (
-          <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <Badge className="bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30">
             <AlertTriangle className="w-3 h-3 mr-1" /> Expiring Soon
           </Badge>
         );
       default:
         return (
-          <Badge className="bg-[#1B3A5A] text-[#8B9DB5] border border-[#2A4A6A]">
+          <Badge className="bg-muted text-muted-foreground border border-border">
             Not Uploaded
           </Badge>
         );
@@ -140,20 +140,20 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
     <div className="space-y-6" data-testid="document-upload-step">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-          <FileText className="w-7 h-7 text-[#00D4FF]" />
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <FileText className="w-7 h-7 text-primary" />
           Document Upload
         </h2>
-        <p className="text-[#8B9DB5] mt-2">
+        <p className="text-muted-foreground mt-2">
           Upload your carrier documents. {uploadedCount} of {requiredCount} required documents uploaded.
         </p>
       </div>
 
       {/* Country Notice */}
       {!country && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0" />
-          <p className="text-amber-400 text-sm">
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+          <p className="text-yellow-600 dark:text-yellow-400 text-sm">
             Please select your country in Step 1 to see the correct document requirements.
           </p>
         </div>
@@ -168,8 +168,8 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
           return (
             <div
               key={doc.id}
-              className={`bg-[#0D1B2A] rounded-xl border transition-colors ${
-                isUploaded ? 'border-[#00D4FF]/30' : 'border-[#1B3A5A]'
+              className={`bg-card rounded-xl border transition-colors ${
+                isUploaded ? 'border-primary/30' : 'border-border'
               }`}
               data-testid={`document-card-${doc.id}`}
             >
@@ -177,13 +177,13 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-white font-medium">{doc.name}</h3>
+                      <h3 className="text-foreground font-medium">{doc.name}</h3>
                       {doc.required && (
-                        <span className="text-xs text-red-400">Required</span>
+                        <span className="text-xs text-destructive">Required</span>
                       )}
                       {getStatusBadge(docData)}
                     </div>
-                    <p className="text-[#8B9DB5] text-sm mt-1">{doc.description}</p>
+                    <p className="text-muted-foreground text-sm mt-1">{doc.description}</p>
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -193,7 +193,7 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
                           variant="ghost"
                           size="sm"
                           onClick={() => setPreviewDoc(docData)}
-                          className="text-[#00D4FF] hover:bg-[#00D4FF]/10"
+                          className="text-primary hover:bg-primary/10"
                           data-testid={`view-${doc.id}`}
                         >
                           <Eye className="w-4 h-4" />
@@ -202,7 +202,7 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveDocument(doc.id)}
-                          className="text-red-400 hover:bg-red-400/10"
+                          className="text-destructive hover:bg-destructive/10"
                           data-testid={`remove-${doc.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -213,7 +213,7 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
                         variant="outline"
                         size="sm"
                         onClick={() => fileInputRefs.current[doc.id]?.click()}
-                        className="border-[#1B3A5A] text-[#00D4FF] hover:bg-[#1B3A5A]"
+                        className="border-border text-primary hover:bg-muted"
                         data-testid={`upload-${doc.id}`}
                       >
                         <Upload className="w-4 h-4 mr-2" />
@@ -232,23 +232,23 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
 
                 {/* Uploaded File Info & Expiry */}
                 {isUploaded && (
-                  <div className="mt-4 pt-4 border-t border-[#1B3A5A] flex items-center justify-between flex-wrap gap-4">
-                    <div className="flex items-center gap-2 text-sm text-[#8B9DB5]">
+                  <div className="mt-4 pt-4 border-t border-border flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <FileText className="w-4 h-4" />
                       <span className="truncate max-w-[200px]">{docData.fileName}</span>
-                      <span className="text-[#5A6B7D]">•</span>
+                      <span className="text-muted-foreground/50">-</span>
                       <span>{format(new Date(docData.uploadedAt), 'MMM d, yyyy')}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Label className="text-[#8B9DB5] text-sm">Expiry Date:</Label>
+                      <Label className="text-muted-foreground text-sm">Expiry Date:</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
-                            className={`border-[#1B3A5A] hover:bg-[#1B3A5A] ${
-                              docData.expiryDate ? 'text-white' : 'text-[#5A6B7D]'
+                            className={`border-border hover:bg-muted ${
+                              docData.expiryDate ? 'text-foreground' : 'text-muted-foreground'
                             }`}
                             data-testid={`expiry-${doc.id}`}
                           >
@@ -259,13 +259,12 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
                             }
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 bg-[#0D1B2A] border-[#1B3A5A]">
+                        <PopoverContent className="w-auto p-0 bg-popover border-border">
                           <Calendar
                             mode="single"
                             selected={docData.expiryDate ? new Date(docData.expiryDate) : undefined}
                             onSelect={(date) => handleExpiryChange(doc.id, date)}
                             initialFocus
-                            className="bg-[#0D1B2A]"
                           />
                         </PopoverContent>
                       </Popover>
@@ -281,14 +280,14 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
       {/* Preview Modal */}
       {previewDoc && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0D1B2A] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-[#1B3A5A]">
-            <div className="flex items-center justify-between p-4 border-b border-[#1B3A5A]">
-              <h3 className="text-white font-medium">{previewDoc.fileName}</h3>
+          <div className="bg-card rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-border">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-foreground font-medium">{previewDoc.fileName}</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setPreviewDoc(null)}
-                className="text-[#8B9DB5] hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
               </Button>

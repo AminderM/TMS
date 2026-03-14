@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   Check, FileText, AlertTriangle, Send, Eye, X,
-  Clock, Download, Mail, RefreshCw
+  Clock, RefreshCw, Moon, Sun
 } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 
@@ -16,6 +16,23 @@ const ProfileCompleteScreen = ({
   onClose 
 }) => {
   const { companyInfo, documents } = profileData;
+  
+  // Theme state
+  const [isDark, setIsDark] = React.useState(() => {
+    return document.documentElement.classList.contains('dark');
+  });
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDark(true);
+    }
+  };
   
   // Count documents
   const uploadedDocs = Object.keys(documents).filter(k => documents[k]?.fileData);
@@ -48,9 +65,9 @@ const ProfileCompleteScreen = ({
   };
 
   const getPackageStatus = (pkg) => {
-    if (pkg.downloaded) return { label: 'Downloaded', color: 'bg-green-500/20 text-green-400 border-green-500/30' };
-    if (pkg.opened) return { label: 'Opened', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
-    return { label: 'Sent', color: 'bg-[#00D4FF]/20 text-[#00D4FF] border-[#00D4FF]/30' };
+    if (pkg.downloaded) return { label: 'Downloaded', color: 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30' };
+    if (pkg.opened) return { label: 'Opened', color: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30' };
+    return { label: 'Sent', color: 'bg-primary/20 text-primary border-primary/30' };
   };
 
   const shouldShowReminder = (pkg) => {
@@ -60,51 +77,66 @@ const ProfileCompleteScreen = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] p-8" data-testid="profile-complete-screen">
+    <div className="min-h-screen bg-background p-8" data-testid="profile-complete-screen">
       {/* Header */}
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-white">Profile Complete</h1>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            className="text-[#8B9DB5] hover:text-white hover:bg-[#1B3A5A]"
-            data-testid="close-complete-button"
-          >
-            <X className="w-5 h-5" />
-          </Button>
+          <h1 className="text-2xl font-bold text-foreground">Profile Complete</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleTheme}
+              className="border-border"
+              data-testid="theme-toggle-complete"
+            >
+              {isDark ? (
+                <Sun className="h-4 w-4 text-yellow-400" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted"
+              data-testid="close-complete-button"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Profile Summary Card */}
-        <div className="bg-[#0D1B2A] rounded-xl border border-[#1B3A5A] p-8 mb-8">
+        <div className="bg-card rounded-xl border border-border p-8 mb-8">
           <div className="flex items-start gap-6">
             {/* Logo */}
             {companyInfo.logoPreview ? (
               <img 
                 src={companyInfo.logoPreview} 
                 alt="Company logo" 
-                className="w-24 h-24 object-contain rounded-xl bg-white p-2"
+                className="w-24 h-24 object-contain rounded-xl bg-muted p-2"
               />
             ) : (
-              <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-[#00D4FF] to-[#0066FF] flex items-center justify-center">
-                <span className="text-3xl font-bold text-white">{getInitials()}</span>
+              <div className="w-24 h-24 rounded-xl bg-primary flex items-center justify-center">
+                <span className="text-3xl font-bold text-primary-foreground">{getInitials()}</span>
               </div>
             )}
 
             {/* Company Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-2xl font-bold text-foreground">
                   {companyInfo.legalName || 'Company Name'}
                 </h2>
-                <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+                <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30">
                   <Check className="w-3 h-3 mr-1" /> Verified
                 </Badge>
               </div>
               {companyInfo.dbaName && (
-                <p className="text-[#8B9DB5] mb-2">DBA: {companyInfo.dbaName}</p>
+                <p className="text-muted-foreground mb-2">DBA: {companyInfo.dbaName}</p>
               )}
-              <div className="flex items-center gap-4 text-sm text-[#8B9DB5]">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>{companyInfo.province}, {companyInfo.country}</span>
                 <span>•</span>
                 <span>{companyInfo.phone}</span>
@@ -115,61 +147,61 @@ const ProfileCompleteScreen = ({
           </div>
 
           {/* Document Stats */}
-          <div className="mt-8 pt-6 border-t border-[#1B3A5A]">
+          <div className="mt-8 pt-6 border-t border-border">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Uploaded */}
-              <div className="bg-[#0A1628] rounded-lg p-4 border border-[#1B3A5A]">
+              <div className="bg-background rounded-lg p-4 border border-border">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#00D4FF]/20 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-[#00D4FF]" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {uploadedDocs.length} / {getTotalRequired()}
                     </div>
-                    <div className="text-sm text-[#8B9DB5]">Documents Uploaded</div>
+                    <div className="text-sm text-muted-foreground">Documents Uploaded</div>
                   </div>
                 </div>
               </div>
 
               {/* Expiring Soon */}
-              <div className="bg-[#0A1628] rounded-lg p-4 border border-[#1B3A5A]">
+              <div className="bg-background rounded-lg p-4 border border-border">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    expiringDocs.length > 0 ? 'bg-amber-500/20' : 'bg-[#1B3A5A]'
+                    expiringDocs.length > 0 ? 'bg-yellow-500/20' : 'bg-muted'
                   }`}>
                     <Clock className={`w-5 h-5 ${
-                      expiringDocs.length > 0 ? 'text-amber-400' : 'text-[#5A6B7D]'
+                      expiringDocs.length > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-muted-foreground'
                     }`} />
                   </div>
                   <div>
                     <div className={`text-2xl font-bold ${
-                      expiringDocs.length > 0 ? 'text-amber-400' : 'text-white'
+                      expiringDocs.length > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-foreground'
                     }`}>
                       {expiringDocs.length}
                     </div>
-                    <div className="text-sm text-[#8B9DB5]">Expiring Soon</div>
+                    <div className="text-sm text-muted-foreground">Expiring Soon</div>
                   </div>
                 </div>
               </div>
 
               {/* Expired */}
-              <div className="bg-[#0A1628] rounded-lg p-4 border border-[#1B3A5A]">
+              <div className="bg-background rounded-lg p-4 border border-border">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    expiredDocs.length > 0 ? 'bg-red-500/20' : 'bg-[#1B3A5A]'
+                    expiredDocs.length > 0 ? 'bg-destructive/20' : 'bg-muted'
                   }`}>
                     <AlertTriangle className={`w-5 h-5 ${
-                      expiredDocs.length > 0 ? 'text-red-400' : 'text-[#5A6B7D]'
+                      expiredDocs.length > 0 ? 'text-destructive' : 'text-muted-foreground'
                     }`} />
                   </div>
                   <div>
                     <div className={`text-2xl font-bold ${
-                      expiredDocs.length > 0 ? 'text-red-400' : 'text-white'
+                      expiredDocs.length > 0 ? 'text-destructive' : 'text-foreground'
                     }`}>
                       {expiredDocs.length}
                     </div>
-                    <div className="text-sm text-[#8B9DB5]">Expired</div>
+                    <div className="text-sm text-muted-foreground">Expired</div>
                   </div>
                 </div>
               </div>
@@ -181,7 +213,7 @@ const ProfileCompleteScreen = ({
             <Button
               variant="outline"
               onClick={onViewProfile}
-              className="border-[#1B3A5A] text-[#8B9DB5] hover:bg-[#1B3A5A] hover:text-white"
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
               data-testid="view-profile-button"
             >
               <Eye className="w-4 h-4 mr-2" />
@@ -189,7 +221,7 @@ const ProfileCompleteScreen = ({
             </Button>
             <Button
               onClick={onSendPackage}
-              className="bg-[#00D4FF] text-[#0A1628] hover:bg-[#00B8E0] font-medium"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
               data-testid="send-package-button"
             >
               <Send className="w-4 h-4 mr-2" />
@@ -200,31 +232,31 @@ const ProfileCompleteScreen = ({
 
         {/* Sent Packages Tracking */}
         {sentPackages.length > 0 && (
-          <div className="bg-[#0D1B2A] rounded-xl border border-[#1B3A5A] p-6">
-            <h3 className="text-lg font-semibold text-white mb-6">Sent Packages</h3>
+          <div className="bg-card rounded-xl border border-border p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-6">Sent Packages</h3>
             
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#1B3A5A]">
-                    <th className="text-left py-3 px-4 text-[#8B9DB5] font-medium text-sm">Recipient</th>
-                    <th className="text-left py-3 px-4 text-[#8B9DB5] font-medium text-sm">Date Sent</th>
-                    <th className="text-left py-3 px-4 text-[#8B9DB5] font-medium text-sm">Status</th>
-                    <th className="text-left py-3 px-4 text-[#8B9DB5] font-medium text-sm">Last Opened</th>
-                    <th className="text-right py-3 px-4 text-[#8B9DB5] font-medium text-sm">Actions</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">Recipient</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">Date Sent</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">Status</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">Last Opened</th>
+                    <th className="text-right py-3 px-4 text-muted-foreground font-medium text-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sentPackages.map((pkg) => {
                     const status = getPackageStatus(pkg);
                     return (
-                      <tr key={pkg.id} className="border-b border-[#1B3A5A]/50 hover:bg-[#0A1628]/50">
+                      <tr key={pkg.id} className="border-b border-border/50 hover:bg-muted/50">
                         <td className="py-4 px-4">
-                          <div className="text-white font-medium">{pkg.recipientName}</div>
-                          <div className="text-[#8B9DB5] text-sm">{pkg.recipientCompany}</div>
-                          <div className="text-[#5A6B7D] text-xs">{pkg.recipientEmail}</div>
+                          <div className="text-foreground font-medium">{pkg.recipientName}</div>
+                          <div className="text-muted-foreground text-sm">{pkg.recipientCompany}</div>
+                          <div className="text-muted-foreground/70 text-xs">{pkg.recipientEmail}</div>
                         </td>
-                        <td className="py-4 px-4 text-[#8B9DB5]">
+                        <td className="py-4 px-4 text-muted-foreground">
                           {format(new Date(pkg.dateSent), 'MMM d, yyyy')}
                         </td>
                         <td className="py-4 px-4">
@@ -232,7 +264,7 @@ const ProfileCompleteScreen = ({
                             {status.label}
                           </Badge>
                         </td>
-                        <td className="py-4 px-4 text-[#8B9DB5]">
+                        <td className="py-4 px-4 text-muted-foreground">
                           {pkg.lastOpened 
                             ? format(new Date(pkg.lastOpened), 'MMM d, yyyy h:mm a')
                             : '—'
@@ -244,7 +276,7 @@ const ProfileCompleteScreen = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => onSendReminder(pkg.id)}
-                              className="text-[#00D4FF] hover:bg-[#00D4FF]/10"
+                              className="text-primary hover:bg-primary/10"
                               data-testid={`reminder-${pkg.id}`}
                             >
                               <RefreshCw className="w-4 h-4 mr-2" />

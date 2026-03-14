@@ -5,8 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { 
   Building2, FileText, Shield, Truck, CreditCard, 
-  Check, Circle, ChevronLeft, ChevronRight, Save, LogOut,
-  X
+  Check, ChevronLeft, ChevronRight, Save, X, Moon, Sun
 } from 'lucide-react';
 
 // Step Components
@@ -108,6 +107,11 @@ const loadFromStorage = (key, defaultValue) => {
 const CarrierProfileWizard = ({ onClose }) => {
   const { user } = useAuth();
   
+  // Theme state
+  const [isDark, setIsDark] = useState(() => {
+    return document.documentElement.classList.contains('dark');
+  });
+  
   // Initialize state from localStorage
   const [profileData, setProfileData] = useState(() => loadFromStorage(STORAGE_KEY, initialProfileData));
   const [currentStep, setCurrentStep] = useState(() => {
@@ -121,6 +125,19 @@ const CarrierProfileWizard = ({ onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [showSendPackage, setShowSendPackage] = useState(false);
   const [sentPackages, setSentPackages] = useState(() => loadFromStorage('carrier_sent_packages', []));
+
+  // Toggle theme
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDark(true);
+    }
+  };
 
   // Auto-save on data change
   const saveProgress = useCallback(() => {
@@ -289,7 +306,7 @@ const CarrierProfileWizard = ({ onClose }) => {
   // If profile is complete, show completion screen
   if (isComplete) {
     return (
-      <div className="fixed inset-0 bg-[#0A1628] z-50 overflow-auto">
+      <div className="fixed inset-0 bg-background z-50 overflow-auto">
         <ProfileCompleteScreen
           profileData={profileData}
           sentPackages={sentPackages}
@@ -310,13 +327,13 @@ const CarrierProfileWizard = ({ onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#0A1628] z-50 flex" data-testid="carrier-profile-wizard">
+    <div className="fixed inset-0 bg-background z-50 flex" data-testid="carrier-profile-wizard">
       {/* Left Sidebar */}
-      <div className="w-72 bg-[#0D1B2A] border-r border-[#1B3A5A] flex flex-col">
+      <div className="w-72 bg-card border-r border-border flex flex-col">
         {/* Logo Area */}
-        <div className="p-6 border-b border-[#1B3A5A]">
-          <h2 className="text-xl font-bold text-white">Carrier Profile</h2>
-          <p className="text-sm text-[#8B9DB5] mt-1">Build your company profile</p>
+        <div className="p-6 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">Carrier Profile</h2>
+          <p className="text-sm text-muted-foreground mt-1">Build your company profile</p>
         </div>
 
         {/* Steps */}
@@ -332,21 +349,21 @@ const CarrierProfileWizard = ({ onClose }) => {
                   disabled={status === 'upcoming'}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     status === 'current'
-                      ? 'bg-[#0A1628] border border-[#00D4FF] text-white'
+                      ? 'bg-primary/10 border border-primary text-foreground'
                       : status === 'complete'
-                      ? 'bg-[#0A1628]/50 text-[#00D4FF] hover:bg-[#0A1628]'
-                      : 'text-[#5A6B7D] cursor-not-allowed'
+                      ? 'bg-muted/50 text-primary hover:bg-muted'
+                      : 'text-muted-foreground cursor-not-allowed'
                   }`}
                   data-testid={`step-${step.id}-button`}
                 >
                   {/* Status Dot */}
-                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                    status === 'complete' ? 'bg-[#00D4FF]' :
-                    status === 'current' ? 'bg-[#0A1628] border-2 border-[#00D4FF]' :
-                    'bg-[#2A3F55]'
+                  <div className={`w-3 h-3 rounded-full flex-shrink-0 flex items-center justify-center ${
+                    status === 'complete' ? 'bg-primary' :
+                    status === 'current' ? 'bg-background border-2 border-primary' :
+                    'bg-muted'
                   }`}>
                     {status === 'complete' && (
-                      <Check className="w-3 h-3 text-[#0A1628]" />
+                      <Check className="w-2 h-2 text-primary-foreground" />
                     )}
                   </div>
                   <Icon className="w-5 h-5" />
@@ -358,15 +375,15 @@ const CarrierProfileWizard = ({ onClose }) => {
         </div>
 
         {/* User Info */}
-        <div className="p-4 border-t border-[#1B3A5A]">
-          <div className="flex items-center gap-3 text-sm text-[#8B9DB5]">
-            <div className="w-8 h-8 rounded-full bg-[#1B3A5A] flex items-center justify-center">
-              <span className="text-[#00D4FF] font-medium">
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-primary font-medium">
                 {user?.full_name?.charAt(0) || 'U'}
               </span>
             </div>
             <div className="truncate">
-              <div className="text-white font-medium truncate">{user?.full_name}</div>
+              <div className="text-foreground font-medium truncate">{user?.full_name}</div>
               <div className="text-xs truncate">{user?.email}</div>
             </div>
           </div>
@@ -376,31 +393,46 @@ const CarrierProfileWizard = ({ onClose }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-[#0D1B2A] border-b border-[#1B3A5A] px-8 py-4">
+        <div className="bg-card border-b border-border px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-[#8B9DB5] text-sm">
+              <span className="text-muted-foreground text-sm">
                 Step {currentStep} of 5
               </span>
               <Progress 
                 value={calculateProgress()} 
-                className="w-48 h-2 bg-[#1B3A5A]"
+                className="w-48 h-2 bg-muted"
               />
-              <span className="text-[#00D4FF] text-sm font-medium">
+              <span className="text-primary text-sm font-medium">
                 {calculateProgress()}% Complete
               </span>
             </div>
             <div className="flex items-center gap-3">
+              {/* Theme Toggle */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleTheme}
+                className="border-border"
+                data-testid="theme-toggle"
+              >
+                {isDark ? (
+                  <Sun className="h-4 w-4 text-yellow-400" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
+              
               <Button
                 variant="outline"
                 onClick={handleSaveAndExit}
                 disabled={isSaving}
-                className="border-[#1B3A5A] text-[#8B9DB5] hover:bg-[#1B3A5A] hover:text-white"
+                className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                 data-testid="save-exit-button"
               >
                 {isSaving ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-[#00D4FF] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     Saving...
                   </>
                 ) : (
@@ -413,7 +445,7 @@ const CarrierProfileWizard = ({ onClose }) => {
               <Button
                 variant="ghost"
                 onClick={onClose}
-                className="text-[#8B9DB5] hover:text-white hover:bg-[#1B3A5A]"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 data-testid="close-wizard-button"
               >
                 <X className="w-5 h-5" />
@@ -423,20 +455,20 @@ const CarrierProfileWizard = ({ onClose }) => {
         </div>
 
         {/* Step Content */}
-        <div className="flex-1 overflow-auto p-8">
+        <div className="flex-1 overflow-auto p-8 bg-background">
           <div className="max-w-4xl mx-auto">
             {renderStepContent()}
           </div>
         </div>
 
         {/* Footer Navigation */}
-        <div className="bg-[#0D1B2A] border-t border-[#1B3A5A] px-8 py-4">
+        <div className="bg-card border-t border-border px-8 py-4">
           <div className="max-w-4xl mx-auto flex justify-between">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className="border-[#1B3A5A] text-[#8B9DB5] hover:bg-[#1B3A5A] hover:text-white disabled:opacity-50"
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
               data-testid="previous-button"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
@@ -444,7 +476,7 @@ const CarrierProfileWizard = ({ onClose }) => {
             </Button>
             <Button
               onClick={handleNext}
-              className="bg-[#00D4FF] text-[#0A1628] hover:bg-[#00B8E0] font-medium px-8"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-8"
               data-testid="next-button"
             >
               {currentStep === 5 ? 'Complete Profile' : 'Next'}
