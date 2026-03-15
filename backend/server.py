@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -79,7 +79,7 @@ def generate_token():
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
-def get_current_user(authorization: str = None):
+def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     
@@ -143,9 +143,7 @@ async def register(request: RegisterRequest):
     return {"message": "User registered successfully", "email": email}
 
 @app.post("/api/companies")
-async def create_company(company: CompanyCreate, authorization: str = None):
-    user = get_current_user(authorization)
-    
+async def create_company(company: CompanyCreate, user: dict = Depends(get_current_user)):
     company_id = f"company_{secrets.token_hex(8)}"
     company_data = {
         "id": company_id,
@@ -169,9 +167,7 @@ async def create_company(company: CompanyCreate, authorization: str = None):
     return company_data
 
 @app.get("/api/companies/current")
-async def get_current_company(authorization: str = None):
-    user = get_current_user(authorization)
-    
+async def get_current_company(user: dict = Depends(get_current_user)):
     company_id = user.get("company_id")
     if not company_id or company_id not in companies_db:
         raise HTTPException(status_code=404, detail="Company not found")
@@ -179,12 +175,15 @@ async def get_current_company(authorization: str = None):
     return companies_db[company_id]
 
 @app.get("/api/companies/my")
-async def get_my_company(authorization: str = None):
-    return await get_current_company(authorization)
+async def get_my_company(user: dict = Depends(get_current_user)):
+    company_id = user.get("company_id")
+    if not company_id or company_id not in companies_db:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    return companies_db[company_id]
 
 @app.get("/api/users/me")
-async def get_me(authorization: str = None):
-    user = get_current_user(authorization)
+async def get_me(user: dict = Depends(get_current_user)):
     return {k: v for k, v in user.items() if k != "password_hash"}
 
 # Features endpoint for FeatureLoader
@@ -203,3 +202,215 @@ async def get_features():
             {"name": "admin_console", "enabled": True}
         ]
     }
+
+# Admin endpoints
+DEMO_PLANS = [
+    {
+        "id": "tms_starter",
+        "label": "Transportation Management System",
+        "tier": "Starter",
+        "subtitle": "For small fleet operations",
+        "description": "Complete fleet operations with real-time tracking, order management, and comprehensive analytics for small to medium fleets.",
+        "price": 299,
+        "status": "active",
+        "features": [
+            "✓ Real-time GPS tracking",
+            "✓ Order management",
+            "✓ AI-powered tools",
+            "✓ Up to 25 vehicles",
+            "✓ Basic analytics"
+        ]
+    },
+    {
+        "id": "tms_professional",
+        "label": "Transportation Management System",
+        "tier": "Professional",
+        "subtitle": "For growing businesses",
+        "description": "Advanced fleet management with enhanced analytics, driver management, and multi-location support.",
+        "price": 599,
+        "status": "active",
+        "features": [
+            "✓ Everything in Starter",
+            "✓ Up to 100 vehicles",
+            "✓ Advanced analytics",
+            "✓ Driver management",
+            "✓ Multi-location support"
+        ]
+    },
+    {
+        "id": "tms_enterprise",
+        "label": "Transportation Management System",
+        "tier": "Enterprise",
+        "subtitle": "For large operations",
+        "description": "Full-scale enterprise solution with unlimited vehicles, custom integrations, and dedicated support.",
+        "price": 1299,
+        "status": "active",
+        "features": [
+            "✓ Everything in Professional",
+            "✓ Unlimited vehicles",
+            "✓ Custom integrations",
+            "✓ Dedicated support",
+            "✓ SLA guarantees"
+        ]
+    },
+    {
+        "id": "heavy_tms",
+        "label": "Heavy Transportation Management System",
+        "tier": "Standard",
+        "subtitle": "Specialized for heavy equipment",
+        "description": "Specialized for oversized loads, heavy equipment hauling, and permit management.",
+        "price": 799,
+        "status": "active",
+        "features": [
+            "✓ Oversized load management",
+            "✓ Permit tracking",
+            "✓ Route planning",
+            "✓ Weight compliance",
+            "✓ Equipment scheduling"
+        ]
+    },
+    {
+        "id": "broker_ms",
+        "label": "Broker Management System",
+        "tier": "Standard",
+        "subtitle": "For freight brokers",
+        "description": "Streamline freight brokerage with carrier management, load matching, and workflows.",
+        "price": 449,
+        "status": "active",
+        "features": [
+            "✓ Carrier network",
+            "✓ Load matching",
+            "✓ Rate management",
+            "✓ Invoice automation",
+            "✓ Carrier compliance"
+        ]
+    },
+    {
+        "id": "dispatch_ms",
+        "label": "Dispatch Management System",
+        "tier": "Standard",
+        "subtitle": "Optimize dispatching",
+        "description": "Optimize dispatching with real-time load assignment and driver communication.",
+        "price": 349,
+        "status": "active",
+        "features": [
+            "✓ Real-time dispatch",
+            "✓ Load optimization",
+            "✓ ETA tracking",
+            "✓ Driver communication",
+            "✓ Route optimization"
+        ]
+    },
+    {
+        "id": "freight_ms",
+        "label": "Freight Management System",
+        "tier": "Standard",
+        "subtitle": "End-to-end freight ops",
+        "description": "End-to-end freight operations covering shipment tracking and documentation.",
+        "price": 499,
+        "status": "active",
+        "features": [
+            "✓ Shipment tracking",
+            "✓ Multi-modal transport",
+            "✓ Freight audit",
+            "✓ Documentation",
+            "✓ Carrier selection"
+        ]
+    },
+    {
+        "id": "vehicle_ms",
+        "label": "Vehicle Management System",
+        "tier": "Standard",
+        "subtitle": "Fleet maintenance",
+        "description": "Complete fleet maintenance including scheduling, inspections, and fuel management.",
+        "price": 249,
+        "status": "active",
+        "features": [
+            "✓ Preventive maintenance",
+            "✓ DVIR inspections",
+            "✓ Fuel tracking",
+            "✓ Parts inventory",
+            "✓ Service scheduling"
+        ]
+    },
+    {
+        "id": "route_mate",
+        "label": "Integrated Route Mate",
+        "tier": "Standard",
+        "subtitle": "Route optimization",
+        "description": "Advanced route optimization with real-time traffic, multi-stop planning, and delivery windows.",
+        "price": 199,
+        "status": "active",
+        "features": [
+            "✓ Multi-stop routing",
+            "✓ Real-time traffic",
+            "✓ Delivery windows",
+            "✓ Driver assignments",
+            "✓ Customer notifications"
+        ]
+    },
+    {
+        "id": "driver_app",
+        "label": "Driver App",
+        "tier": "Standard",
+        "subtitle": "Mobile driver interface",
+        "description": "Mobile app for drivers with load management, navigation, and document capture.",
+        "price": 49,
+        "status": "active",
+        "features": [
+            "✓ Load acceptance",
+            "✓ Turn-by-turn navigation",
+            "✓ Document capture",
+            "✓ Electronic POD",
+            "✓ Hours of service"
+        ]
+    }
+]
+
+DEMO_TENANTS = [
+    {
+        "id": "tenant_1",
+        "name": "ABC Trucking Co",
+        "plan": "tms_professional",
+        "seats": 50,
+        "status": "active",
+        "feature_flags": {"analytics": True, "api_access": True},
+        "created_at": "2025-01-15T10:00:00Z"
+    },
+    {
+        "id": "tenant_2",
+        "name": "XYZ Logistics",
+        "plan": "tms_starter",
+        "seats": 20,
+        "status": "active",
+        "feature_flags": {"analytics": True, "api_access": False},
+        "created_at": "2025-02-20T14:30:00Z"
+    }
+]
+
+@app.get("/api/admin/plans")
+async def get_admin_plans(user: dict = Depends(get_current_user)):
+    if user.get("role") != "platform_admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return DEMO_PLANS
+
+@app.get("/api/admin/tenants")
+async def get_admin_tenants(user: dict = Depends(get_current_user)):
+    if user.get("role") != "platform_admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return DEMO_TENANTS
+
+@app.get("/api/admin/tenants/{tenant_id}/integrations")
+async def get_tenant_integrations(tenant_id: str, user: dict = Depends(get_current_user)):
+    if user.get("role") != "platform_admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return []
+
+@app.put("/api/admin/tenants/{tenant_id}")
+async def update_tenant(tenant_id: str, user: dict = Depends(get_current_user)):
+    if user.get("role") != "platform_admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    for tenant in DEMO_TENANTS:
+        if tenant["id"] == tenant_id:
+            return tenant
+    raise HTTPException(status_code=404, detail="Tenant not found")
