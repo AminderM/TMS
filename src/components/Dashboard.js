@@ -19,6 +19,7 @@ import SalesDepartment from './SalesDepartment';
 import AccountingDepartment from './AccountingDepartment';
 import DispatchAnalytics from './DispatchAnalytics';
 import ThemeToggle from './ThemeToggle';
+import { CarrierProfileWizard } from './carrier-profile';
 
 const Dashboard = () => {
   const { user, logout, fetchWithAuth } = useAuth();
@@ -42,6 +43,7 @@ const Dashboard = () => {
   const [selectedEquipmentForTracking, setSelectedEquipmentForTracking] = useState(null);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showCarrierProfile, setShowCarrierProfile] = useState(false);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -148,6 +150,14 @@ const Dashboard = () => {
                   >
                     <i className="fas fa-id-card mr-2"></i>
                     Company Profile
+                  </button>
+                  <button
+                    onClick={() => setShowCarrierProfile(true)}
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-muted bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-medium"
+                    data-testid="carrier-profile-button"
+                  >
+                    <i className="fas fa-file-contract mr-2"></i>
+                    Carrier Profile Builder
                   </button>
                   {isPlatformAdmin && (
                     <>
@@ -287,6 +297,11 @@ const Dashboard = () => {
           />
         </div>
       </div>
+
+      {/* Carrier Profile Wizard Modal */}
+      {showCarrierProfile && (
+        <CarrierProfileWizard onClose={() => setShowCarrierProfile(false)} />
+      )}
     </div>
   );
 };

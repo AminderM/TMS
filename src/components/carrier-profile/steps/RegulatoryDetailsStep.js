@@ -1,0 +1,296 @@
+import React from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Shield, Info } from 'lucide-react';
+
+const safetyRatings = ['Satisfactory', 'Conditional', 'Unsatisfactory', 'Unrated'];
+
+const RegulatoryDetailsStep = ({ data, country, documents, onChange }) => {
+  const handleInputChange = (field, value) => {
+    onChange({ [field]: value });
+  };
+
+  const showCanadian = country === 'Canada' || country === 'Both' || !country;
+  const showUS = country === 'USA' || country === 'Both' || !country;
+
+  return (
+    <div className="space-y-8" data-testid="regulatory-details-step">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <Shield className="w-7 h-7 text-primary" />
+          Regulatory Details
+        </h2>
+        <p className="text-muted-foreground mt-2">
+          Enter your regulatory information. Some fields may be pre-filled from uploaded documents.
+        </p>
+      </div>
+
+      {/* Canadian Section */}
+      {showCanadian && (
+        <div className="bg-card rounded-xl p-6 border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-destructive/20 flex items-center justify-center">
+              <span className="text-lg">CA</span>
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Canadian Regulatory</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* NSC Number */}
+            <div>
+              <Label htmlFor="nscNumber" className="text-foreground font-medium">
+                NSC Number
+              </Label>
+              <Input
+                id="nscNumber"
+                value={data.nscNumber}
+                onChange={(e) => handleInputChange('nscNumber', e.target.value)}
+                placeholder="Enter NSC number"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="nsc-number-input"
+              />
+            </div>
+
+            {/* NSC Safety Rating */}
+            <div>
+              <Label className="text-foreground font-medium">NSC Safety Rating</Label>
+              <Select 
+                value={data.nscSafetyRating} 
+                onValueChange={(value) => handleInputChange('nscSafetyRating', value)}
+              >
+                <SelectTrigger 
+                  className="mt-2 bg-background border-border text-foreground focus:border-primary"
+                  data-testid="nsc-rating-select"
+                >
+                  <SelectValue placeholder="Select rating" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {safetyRatings.map((rating) => (
+                    <SelectItem key={rating} value={rating} className="text-popover-foreground hover:bg-muted">
+                      {rating}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* CVOR Number */}
+            <div>
+              <Label htmlFor="cvorNumber" className="text-foreground font-medium">
+                CVOR Number
+              </Label>
+              <Input
+                id="cvorNumber"
+                value={data.cvorNumber}
+                onChange={(e) => handleInputChange('cvorNumber', e.target.value)}
+                placeholder="Enter CVOR number"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="cvor-number-input"
+              />
+            </div>
+
+            {/* CVOR Safety Rating */}
+            <div>
+              <Label className="text-foreground font-medium">CVOR Safety Rating</Label>
+              <Select 
+                value={data.cvorSafetyRating} 
+                onValueChange={(value) => handleInputChange('cvorSafetyRating', value)}
+              >
+                <SelectTrigger 
+                  className="mt-2 bg-background border-border text-foreground focus:border-primary"
+                  data-testid="cvor-rating-select"
+                >
+                  <SelectValue placeholder="Select rating" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {safetyRatings.map((rating) => (
+                    <SelectItem key={rating} value={rating} className="text-popover-foreground hover:bg-muted">
+                      {rating}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* CRA Business Number */}
+            <div>
+              <Label htmlFor="craBusinessNumber" className="text-foreground font-medium">
+                CRA Business Number
+              </Label>
+              <Input
+                id="craBusinessNumber"
+                value={data.craBusinessNumber}
+                onChange={(e) => handleInputChange('craBusinessNumber', e.target.value)}
+                placeholder="123456789RC0001"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="cra-number-input"
+              />
+            </div>
+
+            {/* GST/HST Number */}
+            <div>
+              <Label htmlFor="gstHstNumber" className="text-foreground font-medium">
+                GST/HST Number
+              </Label>
+              <Input
+                id="gstHstNumber"
+                value={data.gstHstNumber}
+                onChange={(e) => handleInputChange('gstHstNumber', e.target.value)}
+                placeholder="123456789RT0001"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="gst-hst-number-input"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* US Section */}
+      {showUS && (
+        <div className="bg-card rounded-xl p-6 border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <span className="text-lg">US</span>
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">US Regulatory</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* USDOT Number */}
+            <div>
+              <Label htmlFor="usdotNumber" className="text-foreground font-medium">
+                USDOT Number
+              </Label>
+              <Input
+                id="usdotNumber"
+                value={data.usdotNumber}
+                onChange={(e) => handleInputChange('usdotNumber', e.target.value)}
+                placeholder="Enter USDOT number"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="usdot-number-input"
+              />
+            </div>
+
+            {/* MC Number */}
+            <div>
+              <Label htmlFor="mcNumber" className="text-foreground font-medium">
+                MC Number
+              </Label>
+              <Input
+                id="mcNumber"
+                value={data.mcNumber}
+                onChange={(e) => handleInputChange('mcNumber', e.target.value)}
+                placeholder="MC-123456"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="mc-number-input"
+              />
+            </div>
+
+            {/* EIN */}
+            <div>
+              <Label htmlFor="ein" className="text-foreground font-medium">
+                EIN (Employer Identification Number)
+              </Label>
+              <Input
+                id="ein"
+                value={data.ein}
+                onChange={(e) => handleInputChange('ein', e.target.value)}
+                placeholder="XX-XXXXXXX"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="ein-input"
+              />
+            </div>
+
+            {/* IFTA Account Number */}
+            <div>
+              <Label htmlFor="iftaAccountNumber" className="text-foreground font-medium">
+                IFTA Account Number
+              </Label>
+              <Input
+                id="iftaAccountNumber"
+                value={data.iftaAccountNumber}
+                onChange={(e) => handleInputChange('iftaAccountNumber', e.target.value)}
+                placeholder="Enter IFTA account number"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="ifta-account-input"
+              />
+            </div>
+
+            {/* IFTA Base Jurisdiction */}
+            <div className="md:col-span-2">
+              <Label htmlFor="iftaBaseJurisdiction" className="text-foreground font-medium">
+                IFTA Base Jurisdiction
+              </Label>
+              <Input
+                id="iftaBaseJurisdiction"
+                value={data.iftaBaseJurisdiction}
+                onChange={(e) => handleInputChange('iftaBaseJurisdiction', e.target.value)}
+                placeholder="e.g., Texas, California"
+                className="mt-2 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary"
+                data-testid="ifta-jurisdiction-input"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cross-Border Section */}
+      <div className="bg-card rounded-xl p-6 border border-border">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+            <span className="text-lg">CB</span>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Cross-Border Operations</h3>
+        </div>
+
+        <div className="space-y-6">
+          {/* Cross-border capable */}
+          <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+            <div>
+              <Label className="text-foreground font-medium">Cross-border Capable?</Label>
+              <p className="text-muted-foreground text-sm mt-1">
+                Can your fleet operate across the US-Canada border?
+              </p>
+            </div>
+            <Switch
+              checked={data.crossBorderCapable}
+              onCheckedChange={(checked) => handleInputChange('crossBorderCapable', checked)}
+              className="data-[state=checked]:bg-primary"
+              data-testid="cross-border-switch"
+            />
+          </div>
+
+          {/* FAST Card Enrolled */}
+          <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+            <div>
+              <Label className="text-foreground font-medium">FAST Card Enrolled?</Label>
+              <p className="text-muted-foreground text-sm mt-1">
+                Free and Secure Trade program enrollment
+              </p>
+            </div>
+            <Switch
+              checked={data.fastCardEnrolled}
+              onCheckedChange={(checked) => handleInputChange('fastCardEnrolled', checked)}
+              className="data-[state=checked]:bg-primary"
+              data-testid="fast-card-switch"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Info Note */}
+      <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+        <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+        <p className="text-muted-foreground text-sm">
+          Regulatory information helps shippers and brokers verify your carrier authority. 
+          Keep these numbers updated to maintain compliance.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default RegulatoryDetailsStep;
