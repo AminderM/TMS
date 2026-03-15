@@ -37,7 +37,7 @@ The Carrier Profile Builder is a 5-step wizard in the TMS frontend that allows c
 The frontend is **already built and functional** using `localStorage` for demo purposes. Your job is to implement the backend API so data persists in MongoDB.
 
 ### Live Frontend
-- **URL:** `https://onboard-carrier-tms.preview.emergentagent.com`
+- **URL:** `https://tms-frontend-stage.preview.emergentagent.com`
 - **Access:** Login -> Dashboard -> Company dropdown -> "Carrier Profile Builder"
 - **Test Credentials:** `aminderpro@gmail.com` / `Admin@123!`
 

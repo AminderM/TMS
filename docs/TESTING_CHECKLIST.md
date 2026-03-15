@@ -3,7 +3,7 @@
 ## Pre-Testing Setup
 
 ### Access URLs
-- **Frontend:** https://onboard-carrier-tms.preview.emergentagent.com
+- **Frontend:** https://tms-frontend-stage.preview.emergentagent.com
 - **Backend API:** https://api.staging.integratedtech.ca
 
 ### How to Access the Feature

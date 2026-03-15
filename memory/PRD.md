@@ -1,79 +1,76 @@
-# Carrier Profile Builder - Product Requirements Document
+# TMS Frontend - Product Requirements Document
 
 ## Problem Statement
-Build a Carrier Profile Builder within an existing Transportation Management System (TMS) application. The feature guides carriers through creating their profile via a multi-step wizard.
-
-## Core Requirements
-
-### 5-Step Wizard
-1. **Company Info & Logo** - Company details, logo upload (with auto-generated initials avatar fallback)
-2. **Document Upload** - Country-specific documents (Canada/USA/Both), status tracking (Uploaded/Expired)
-3. **Regulatory Details** - NSC, CVOR, USDOT, MC numbers, etc.
-4. **Fleet & Lanes** - Trucks, trailers, equipment types, preferred shipping lanes
-5. **Payment Setup** - Banking info with encryption for sensitive fields
-
-### Additional Features
-- **Profile Completion Screen** - Summary after final step
-- **Document Sharing** - Modal flow to select documents, generate PDF, email to recipient
-- **Package Tracking** - Table showing sent package statuses (NOT STARTED)
-- **Auto-save** - Progress saved on step navigation
-- **Responsive Design** - Works on various screen sizes
-- **Theme Support** - Light/dark mode using existing TMS theme
+Review the TMS (Transportation Management System) Frontend codebase and get it running in preview.
 
 ## Architecture
-- **Frontend:** React app at `/app` (no separate backend in this project)
-- **Backend:** To be built by separate backend developer (see `/app/docs/BACKEND_DEV_INSTRUCTIONS.md`)
-- **Data Storage:** Currently using `localStorage` as temporary fallback (flag `USE_BACKEND_API = false` in `carrierProfileAPI.js`)
+- **Type:** React frontend-only application
+- **Tech Stack:** React 19, Tailwind CSS, React Router v7, ShadcnUI/Radix UI components
+- **Build Tool:** Create React App with CRACO customization
+- **Map Integration:** Leaflet + React-Leaflet for location tracking
+- **Charts:** Recharts for analytics
+- **PDF Generation:** jsPDF for document generation
 
 ## What's Been Implemented
 
-### Frontend (COMPLETE)
-- [x] 5-step wizard with all forms and components
-- [x] Left sidebar navigation with step status indicators
-- [x] Company info form with logo upload/initials avatar
-- [x] Document upload with country-based filtering and expiry tracking
-- [x] Regulatory details form with Canada/US/cross-border fields
-- [x] Fleet & lanes form with equipment grid and lane management
-- [x] Payment setup form with masked sensitive fields
-- [x] Profile completion summary screen
-- [x] Send Package modal (3-step: select docs -> recipient info -> review & send)
-- [x] PDF generation with jsPDF (cover page + document list)
-- [x] Light/dark theme support matching TMS app
-- [x] localStorage fallback for all API functions
-- [x] Integration with main TMS dashboard (Company dropdown -> Carrier Profile Builder)
+### Jan 2026 - Code Review & Preview Setup
+- [x] Analyzed existing TMS codebase structure
+- [x] Set up symlinks for supervisor compatibility (/app/frontend -> /app)
+- [x] Created minimal backend stub for supervisor
+- [x] Configured environment variables
+- [x] Started frontend successfully on port 3000
+- [x] Verified all pages load correctly (Landing, Auth, Driver Portal)
 
-### Backend Instructions (COMPLETE)
-- [x] Consolidated backend developer guide at `/app/docs/BACKEND_DEV_INSTRUCTIONS.md`
-- [x] Database schema (MongoDB)
-- [x] All API endpoint specifications
-- [x] Encryption requirements for banking fields
-- [x] File storage guidelines
-- [x] Testing commands (cURL)
-- [x] Frontend integration checklist
+### Existing Features (Pre-built)
+- Landing page with 6 management systems showcase
+- Authentication pages (login/register)
+- Driver Portal with separate auth flow
+- Mobile Driver App (self-contained at /driver-app)
+- Admin Console with platform management
+- Carrier Profile Builder (5-step wizard with localStorage)
+- Full ShadcnUI component library
+- Light/dark theme support
+- Map integrations (Leaflet)
 
-## Pending / Not Started
+## Core Requirements (Static)
+- React-based SPA for fleet management
+- Multi-tenant architecture support
+- Driver-facing mobile-optimized views
+- Admin console for platform management
+- Carrier onboarding workflow
 
-### P0 - Blocked on Backend
-- [ ] Backend API implementation (separate developer)
-- [ ] End-to-end integration (flip `USE_BACKEND_API` flag when backend is ready)
+## User Personas
+1. **Platform Admin**: Manages users, subscriptions, CRM
+2. **Fleet Owner/Manufacturer**: Manages fleet, bookings, equipment
+3. **Driver**: Accepts loads, navigation, document upload
+4. **Carrier**: Profile setup, document management
 
-### P1 - After Backend Ready
-- [ ] Verify PDF generation and email flow end-to-end
-- [ ] File upload progress indicators
+## Prioritized Backlog
+
+### P0 - Blocked
+- [ ] Backend API implementation (auth, data persistence)
+- [ ] Database integration (MongoDB)
+
+### P1 - After Backend
+- [ ] End-to-end auth flow testing
+- [ ] Real-time WebSocket integration
+- [ ] File upload to cloud storage
 
 ### P2 - Future
-- [ ] Package Tracking UI (table showing sent package statuses)
-- [ ] Document expiry notification system
+- [ ] Package tracking UI
+- [ ] Document expiry notifications
+- [ ] Route optimization features
+
+## Key Files
+- `/app/src/App.js` - Main routing
+- `/app/src/components/` - All UI components
+- `/app/src/contexts/` - Auth, Theme, Features contexts
+- `/app/src/components/carrier-profile/` - Carrier onboarding
+- `/app/src/components/driver-app/` - Mobile driver app
+
+## Preview URL
+https://f585a360-175e-4e6b-984a-cac95d5e33fd.preview.emergentagent.com
 
 ## Test Credentials
 - Email: `aminderpro@gmail.com`
 - Password: `Admin@123!`
-- Access: Admin Console -> Products -> Launch TMS -> Company dropdown -> Carrier Profile Builder
-
-## Key Files
-- `/app/src/components/carrier-profile/carrierProfileAPI.js` - API service layer (localStorage fallback)
-- `/app/src/components/carrier-profile/CarrierProfileWizard.js` - Main wizard component
-- `/app/src/components/carrier-profile/steps/` - Individual step components
-- `/app/src/components/carrier-profile/SendPackageModal.js` - Package sending flow
-- `/app/src/components/carrier-profile/pdfGenerator.js` - Client-side PDF generation
-- `/app/docs/BACKEND_DEV_INSTRUCTIONS.md` - Backend developer instructions
