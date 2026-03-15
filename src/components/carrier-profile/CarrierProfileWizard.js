@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { 
   Building2, FileText, Shield, Truck, CreditCard, 
-  Check, ChevronLeft, ChevronRight, Save, X, Moon, Sun
+  Check, ChevronLeft, ChevronRight, Save, X, Moon, Sun, Loader2
 } from 'lucide-react';
 
 // Step Components
@@ -17,7 +17,8 @@ import PaymentSetupStep from './steps/PaymentSetupStep';
 import ProfileCompleteScreen from './ProfileCompleteScreen';
 import SendPackageModal from './SendPackageModal';
 
-const STORAGE_KEY = 'carrier_profile_data';
+// API Service
+import { carrierProfileAPI } from './carrierProfileAPI';
 
 const steps = [
   { id: 1, name: 'Company Info', icon: Building2 },
@@ -28,7 +29,6 @@ const steps = [
 ];
 
 const initialProfileData = {
-  // Step 1 - Company Info
   companyInfo: {
     legalName: '',
     dbaName: '',
@@ -41,28 +41,22 @@ const initialProfileData = {
     logo: null,
     logoPreview: null,
   },
-  // Step 2 - Documents
   documents: {},
-  // Step 3 - Regulatory Details
   regulatory: {
-    // Canadian
     nscNumber: '',
     nscSafetyRating: '',
     cvorNumber: '',
     cvorSafetyRating: '',
     craBusinessNumber: '',
     gstHstNumber: '',
-    // US
     usdotNumber: '',
     mcNumber: '',
     ein: '',
     iftaAccountNumber: '',
     iftaBaseJurisdiction: '',
-    // Cross-Border
     crossBorderCapable: false,
     fastCardEnrolled: false,
   },
-  // Step 4 - Fleet & Lanes
   fleet: {
     numberOfTrucks: '',
     numberOfTrailers: '',
@@ -73,7 +67,6 @@ const initialProfileData = {
     preferredLanes: [],
     is24x7Dispatch: false,
   },
-  // Step 5 - Payment
   payment: {
     paymentMethod: '',
     factoringCompanyName: '',
@@ -87,44 +80,59 @@ const initialProfileData = {
     currency: '',
     paymentTerms: '',
   },
-  // Meta
   currentStep: 1,
   isComplete: false,
   completedAt: null,
   lastSaved: null,
 };
 
-// Helper to load from localStorage
-const loadFromStorage = (key, defaultValue) => {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-};
-
 const CarrierProfileWizard = ({ onClose }) => {
   const { user } = useAuth();
+  
+  // State
+  const [profileData, setProfileData] = useState(initialProfileData);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isComplete, setIsComplete] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSendPackage, setShowSendPackage] = useState(false);
+  const [sentPackages, setSentPackages] = useState([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   // Theme state
   const [isDark, setIsDark] = useState(() => {
     return document.documentElement.classList.contains('dark');
   });
-  
-  // Initialize state from localStorage
-  const [profileData, setProfileData] = useState(() => loadFromStorage(STORAGE_KEY, initialProfileData));
-  const [currentStep, setCurrentStep] = useState(() => {
-    const saved = loadFromStorage(STORAGE_KEY, null);
-    return saved?.currentStep || 1;
-  });
-  const [isComplete, setIsComplete] = useState(() => {
-    const saved = loadFromStorage(STORAGE_KEY, null);
-    return saved?.isComplete || false;
-  });
-  const [isSaving, setIsSaving] = useState(false);
-  const [showSendPackage, setShowSendPackage] = useState(false);
-  const [sentPackages, setSentPackages] = useState(() => loadFromStorage('carrier_sent_packages', []));
+
+  // Load profile from backend on mount
+  useEffect(() => {
+    const loadProfile = async () => {
+      setIsLoading(true);
+      try {
+        const profile = await carrierProfileAPI.getProfile();
+        if (profile) {
+          setProfileData(profile);
+          setCurrentStep(profile.currentStep || 1);
+          setIsComplete(profile.isComplete || false);
+        }
+        
+        // Load sent packages
+        try {
+          const packages = await carrierProfileAPI.getPackages();
+          setSentPackages(packages);
+        } catch (e) {
+          console.log('No packages found');
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        toast.error('Failed to load profile. Using local data.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadProfile();
+  }, []);
 
   // Toggle theme
   const toggleTheme = () => {
@@ -139,44 +147,45 @@ const CarrierProfileWizard = ({ onClose }) => {
     }
   };
 
-  // Auto-save on data change
-  const saveProgress = useCallback(() => {
-    const dataToSave = {
-      ...profileData,
-      currentStep,
-      lastSaved: new Date().toISOString(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-  }, [profileData, currentStep]);
+  // Save step data to backend
+  const saveStepData = useCallback(async (stepKey, data, nextStep) => {
+    setIsSaving(true);
+    try {
+      await carrierProfileAPI.updateProfile(stepKey, data, nextStep);
+      setHasUnsavedChanges(false);
+      return true;
+    } catch (error) {
+      console.error('Error saving:', error);
+      toast.error('Failed to save. Please try again.');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
 
   // Calculate progress percentage
   const calculateProgress = () => {
     let completedSteps = 0;
     
-    // Check Step 1
     const ci = profileData.companyInfo;
     if (ci.legalName && ci.companyType && ci.country && ci.phone && ci.email) {
       completedSteps++;
     }
     
-    // Check Step 2 - at least some docs uploaded
     if (Object.keys(profileData.documents).length > 0) {
       completedSteps++;
     }
     
-    // Check Step 3 - some regulatory info
     const reg = profileData.regulatory;
     if (reg.nscNumber || reg.usdotNumber || reg.cvorNumber || reg.mcNumber) {
       completedSteps++;
     }
     
-    // Check Step 4 - fleet info
     const fl = profileData.fleet;
     if (fl.numberOfTrucks && fl.equipmentTypes.length > 0) {
       completedSteps++;
     }
     
-    // Check Step 5 - payment info
     const pay = profileData.payment;
     if (pay.paymentMethod && pay.bankName) {
       completedSteps++;
@@ -185,70 +194,149 @@ const CarrierProfileWizard = ({ onClose }) => {
     return Math.round((completedSteps / 5) * 100);
   };
 
+  // Update step data locally and mark as unsaved
   const updateStepData = (stepKey, data) => {
     setProfileData(prev => ({
       ...prev,
       [stepKey]: { ...prev[stepKey], ...data },
     }));
+    setHasUnsavedChanges(true);
   };
 
-  const handleNext = () => {
+  // Get step key from step number
+  const getStepKey = (step) => {
+    const keys = ['companyInfo', 'documents', 'regulatory', 'fleet', 'payment'];
+    return keys[step - 1];
+  };
+
+  // Handle Next button
+  const handleNext = async () => {
+    const stepKey = getStepKey(currentStep);
+    
+    // Save current step data
+    const saved = await saveStepData(stepKey, profileData[stepKey], currentStep + 1);
+    if (!saved) return;
+    
     if (currentStep < 5) {
       setCurrentStep(prev => prev + 1);
-      saveProgress();
     } else {
       // Complete the profile
-      setProfileData(prev => ({
-        ...prev,
-        isComplete: true,
-        completedAt: new Date().toISOString(),
-      }));
-      setIsComplete(true);
-      saveProgress();
-      toast.success('Profile completed successfully!');
+      try {
+        await carrierProfileAPI.completeProfile();
+        setProfileData(prev => ({
+          ...prev,
+          isComplete: true,
+          completedAt: new Date().toISOString(),
+        }));
+        setIsComplete(true);
+        toast.success('Profile completed successfully!');
+      } catch (error) {
+        toast.error('Failed to complete profile');
+      }
     }
   };
 
-  const handlePrevious = () => {
+  // Handle Previous button
+  const handlePrevious = async () => {
+    if (hasUnsavedChanges) {
+      const stepKey = getStepKey(currentStep);
+      await saveStepData(stepKey, profileData[stepKey], currentStep - 1);
+    }
+    
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
   };
 
-  const handleSaveAndExit = () => {
+  // Handle Save & Exit
+  const handleSaveAndExit = async () => {
     setIsSaving(true);
-    saveProgress();
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      const stepKey = getStepKey(currentStep);
+      await saveStepData(stepKey, profileData[stepKey], currentStep);
       toast.success('Progress saved! You can return anytime to continue.');
       onClose();
-    }, 500);
+    } catch (error) {
+      toast.error('Failed to save progress');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSendPackage = (packageData) => {
-    const newPackage = {
-      id: Date.now().toString(),
-      ...packageData,
-      dateSent: new Date().toISOString(),
-      status: 'sent',
-      lastOpened: null,
-    };
-    const updatedPackages = [...sentPackages, newPackage];
-    setSentPackages(updatedPackages);
-    localStorage.setItem('carrier_sent_packages', JSON.stringify(updatedPackages));
-    setShowSendPackage(false);
-    toast.success(`Package sent to ${packageData.recipientEmail}!`);
+  // Handle logo upload
+  const handleLogoUpload = async (file) => {
+    try {
+      const logoUrl = await carrierProfileAPI.uploadLogo(file);
+      setProfileData(prev => ({
+        ...prev,
+        companyInfo: {
+          ...prev.companyInfo,
+          logoPreview: logoUrl,
+        },
+      }));
+      toast.success('Logo uploaded successfully!');
+    } catch (error) {
+      toast.error('Failed to upload logo');
+      throw error;
+    }
   };
 
-  const handleSendReminder = (packageId) => {
-    setSentPackages(prev => 
-      prev.map(pkg => 
-        pkg.id === packageId 
-          ? { ...pkg, reminderSent: new Date().toISOString() }
-          : pkg
-      )
-    );
-    toast.success('Reminder sent!');
+  // Handle document upload
+  const handleDocumentUpload = async (file, documentType, expiryDate) => {
+    try {
+      const doc = await carrierProfileAPI.uploadDocument(file, documentType, expiryDate);
+      setProfileData(prev => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          [documentType]: doc,
+        },
+      }));
+      toast.success('Document uploaded successfully!');
+      return doc;
+    } catch (error) {
+      toast.error('Failed to upload document');
+      throw error;
+    }
+  };
+
+  // Handle document delete
+  const handleDocumentDelete = async (documentType, documentId) => {
+    try {
+      await carrierProfileAPI.deleteDocument(documentId);
+      setProfileData(prev => {
+        const newDocs = { ...prev.documents };
+        delete newDocs[documentType];
+        return { ...prev, documents: newDocs };
+      });
+      toast.success('Document deleted');
+    } catch (error) {
+      toast.error('Failed to delete document');
+    }
+  };
+
+  // Handle send package
+  const handleSendPackage = async (packageData) => {
+    try {
+      const result = await carrierProfileAPI.sendPackage(packageData);
+      setSentPackages(prev => [result, ...prev]);
+      setShowSendPackage(false);
+      toast.success(`Package sent to ${packageData.recipientEmail}!`);
+      return result;
+    } catch (error) {
+      toast.error('Failed to send package');
+      throw error;
+    }
+  };
+
+  // Handle send reminder
+  const handleSendReminder = async (packageId) => {
+    try {
+      await carrierProfileAPI.sendReminder(packageId);
+      toast.success('Reminder sent!');
+    } catch (error) {
+      toast.error('Failed to send reminder');
+    }
   };
 
   const getStepStatus = (stepId) => {
@@ -264,6 +352,7 @@ const CarrierProfileWizard = ({ onClose }) => {
           <CompanyInfoStep
             data={profileData.companyInfo}
             onChange={(data) => updateStepData('companyInfo', data)}
+            onLogoUpload={handleLogoUpload}
           />
         );
       case 2:
@@ -272,6 +361,8 @@ const CarrierProfileWizard = ({ onClose }) => {
             data={profileData.documents}
             country={profileData.companyInfo.country}
             onChange={(data) => updateStepData('documents', data)}
+            onUpload={handleDocumentUpload}
+            onDelete={handleDocumentDelete}
           />
         );
       case 3:
@@ -303,7 +394,19 @@ const CarrierProfileWizard = ({ onClose }) => {
     }
   };
 
-  // If profile is complete, show completion screen
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Complete screen
   if (isComplete) {
     return (
       <div className="fixed inset-0 bg-background z-50 overflow-auto">
@@ -330,13 +433,11 @@ const CarrierProfileWizard = ({ onClose }) => {
     <div className="fixed inset-0 bg-background z-50 flex" data-testid="carrier-profile-wizard">
       {/* Left Sidebar */}
       <div className="w-72 bg-card border-r border-border flex flex-col">
-        {/* Logo Area */}
         <div className="p-6 border-b border-border">
           <h2 className="text-xl font-bold text-foreground">Carrier Profile</h2>
           <p className="text-sm text-muted-foreground mt-1">Build your company profile</p>
         </div>
 
-        {/* Steps */}
         <div className="flex-1 p-4">
           <nav className="space-y-2">
             {steps.map((step) => {
@@ -356,7 +457,6 @@ const CarrierProfileWizard = ({ onClose }) => {
                   }`}
                   data-testid={`step-${step.id}-button`}
                 >
-                  {/* Status Dot */}
                   <div className={`w-3 h-3 rounded-full flex-shrink-0 flex items-center justify-center ${
                     status === 'complete' ? 'bg-primary' :
                     status === 'current' ? 'bg-background border-2 border-primary' :
@@ -374,7 +474,6 @@ const CarrierProfileWizard = ({ onClose }) => {
           </nav>
         </div>
 
-        {/* User Info */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
@@ -392,7 +491,6 @@ const CarrierProfileWizard = ({ onClose }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
         <div className="bg-card border-b border-border px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -406,9 +504,11 @@ const CarrierProfileWizard = ({ onClose }) => {
               <span className="text-primary text-sm font-medium">
                 {calculateProgress()}% Complete
               </span>
+              {hasUnsavedChanges && (
+                <span className="text-yellow-500 text-xs">• Unsaved changes</span>
+              )}
             </div>
             <div className="flex items-center gap-3">
-              {/* Theme Toggle */}
               <Button
                 variant="outline"
                 size="icon"
@@ -432,7 +532,7 @@ const CarrierProfileWizard = ({ onClose }) => {
               >
                 {isSaving ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Saving...
                   </>
                 ) : (
@@ -454,20 +554,18 @@ const CarrierProfileWizard = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Step Content */}
         <div className="flex-1 overflow-auto p-8 bg-background">
           <div className="max-w-4xl mx-auto">
             {renderStepContent()}
           </div>
         </div>
 
-        {/* Footer Navigation */}
         <div className="bg-card border-t border-border px-8 py-4">
           <div className="max-w-4xl mx-auto flex justify-between">
             <Button
               variant="outline"
               onClick={handlePrevious}
-              disabled={currentStep === 1}
+              disabled={currentStep === 1 || isSaving}
               className="border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
               data-testid="previous-button"
             >
@@ -476,11 +574,23 @@ const CarrierProfileWizard = ({ onClose }) => {
             </Button>
             <Button
               onClick={handleNext}
+              disabled={isSaving}
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-8"
               data-testid="next-button"
             >
-              {currentStep === 5 ? 'Complete Profile' : 'Next'}
-              {currentStep !== 5 && <ChevronRight className="w-4 h-4 ml-2" />}
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : currentStep === 5 ? (
+                'Complete Profile'
+              ) : (
+                <>
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )}
             </Button>
           </div>
         </div>

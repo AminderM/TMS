@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 
 const canadianProvinces = [
   'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 
@@ -23,15 +23,16 @@ const usStates = [
   'West Virginia', 'Wisconsin', 'Wyoming'
 ];
 
-const CompanyInfoStep = ({ data, onChange }) => {
+const CompanyInfoStep = ({ data, onChange, onLogoUpload }) => {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleInputChange = (field, value) => {
     onChange({ [field]: value });
   };
 
-  const handleLogoUpload = (file) => {
+  const handleLogoUpload = async (file) => {
     if (!file) return;
     
     // Validate file type
@@ -47,6 +48,20 @@ const CompanyInfoStep = ({ data, onChange }) => {
       return;
     }
 
+    // If API upload function provided, use it
+    if (onLogoUpload) {
+      setIsUploading(true);
+      try {
+        await onLogoUpload(file);
+      } catch (error) {
+        console.error('Logo upload failed:', error);
+      } finally {
+        setIsUploading(false);
+      }
+      return;
+    }
+
+    // Fallback to local preview
     const reader = new FileReader();
     reader.onload = (e) => {
       onChange({
@@ -152,7 +167,7 @@ const CompanyInfoStep = ({ data, onChange }) => {
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !isUploading && fileInputRef.current?.click()}
             data-testid="logo-upload-zone"
           >
             <input
@@ -161,19 +176,29 @@ const CompanyInfoStep = ({ data, onChange }) => {
               accept=".png,.jpg,.jpeg,.svg"
               onChange={(e) => handleLogoUpload(e.target.files[0])}
               className="hidden"
+              disabled={isUploading}
               data-testid="logo-file-input"
             />
             <div className="text-center">
-              <Upload className="w-10 h-10 text-primary mx-auto mb-3" />
-              <p className="text-foreground font-medium">
-                Drag and drop your logo here
-              </p>
-              <p className="text-muted-foreground text-sm mt-1">
-                or click to browse
-              </p>
-              <p className="text-muted-foreground/70 text-xs mt-3">
-                PNG, JPG, SVG - Max 5MB
-              </p>
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-10 h-10 text-primary mx-auto mb-3 animate-spin" />
+                  <p className="text-foreground font-medium">Uploading...</p>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-10 h-10 text-primary mx-auto mb-3" />
+                  <p className="text-foreground font-medium">
+                    Drag and drop your logo here
+                  </p>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    or click to browse
+                  </p>
+                  <p className="text-muted-foreground/70 text-xs mt-3">
+                    PNG, JPG, SVG - Max 5MB
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

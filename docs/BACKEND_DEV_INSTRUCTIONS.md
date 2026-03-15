@@ -1,25 +1,81 @@
-# Carrier Profile Builder - Backend Implementation Instructions
+# Carrier Profile Builder - Backend API Implementation Guide
 
-## For: Backend Developer
-## Priority: High
-## Estimated Effort: 2-3 days
+**For:** Backend Developer  
+**Priority:** High  
+**Estimated Effort:** 2-3 days  
+**Last Updated:** February 2026
 
 ---
 
-## What You're Building
+## Table of Contents
 
-A backend API to support the Carrier Profile Builder wizard in the TMS frontend. The frontend is **already deployed and functional** using localStorage for demo. Your job is to implement the real API endpoints so data persists in the database.
+1. [Overview](#overview)
+2. [Architecture & Stack](#architecture--stack)
+3. [Database Schema](#database-schema)
+4. [API Endpoints](#api-endpoints)
+5. [File Storage](#file-storage)
+6. [Encryption](#encryption)
+7. [Document Types Reference](#document-types-reference)
+8. [Security Requirements](#security-requirements)
+9. [Environment Variables](#environment-variables)
+10. [Testing](#testing)
+11. [Frontend Integration Checklist](#frontend-integration-checklist)
 
-**Live Frontend:** https://1be480b8-f0dc-439f-83a6-3225cd134318.preview.emergentagent.com
-**Access:** Login → Dashboard → Company dropdown → "Carrier Profile Builder"
+---
+
+## Overview
+
+The Carrier Profile Builder is a 5-step wizard in the TMS frontend that allows carriers to:
+
+1. **Company Info & Logo** - Enter company details and upload a logo
+2. **Document Upload** - Upload compliance documents (country-specific for Canada/USA/Both)
+3. **Regulatory Details** - Enter regulatory numbers (NSC, CVOR, USDOT, MC, etc.)
+4. **Fleet & Lanes** - Configure fleet size, equipment types, and preferred shipping lanes
+5. **Payment Setup** - Enter banking information (must be encrypted at rest)
+6. **Send Packages** - Select documents, generate a PDF cover page, and email to a recipient
+
+The frontend is **already built and functional** using `localStorage` for demo purposes. Your job is to implement the backend API so data persists in MongoDB.
+
+### Live Frontend
+- **URL:** `https://onboard-carrier-tms.preview.emergentagent.com`
+- **Access:** Login -> Dashboard -> Company dropdown -> "Carrier Profile Builder"
+- **Test Credentials:** `aminderpro@gmail.com` / `Admin@123!`
+
+### Frontend Code Location
+```
+/app/src/components/carrier-profile/
+  CarrierProfileWizard.js      # Main wizard logic (orchestrates all steps)
+  carrierProfileAPI.js          # API service layer (replace localStorage here)
+  steps/
+    CompanyInfoStep.js          # Step 1 form
+    DocumentUploadStep.js       # Step 2 file uploads
+    RegulatoryDetailsStep.js    # Step 3 regulatory form
+    FleetLanesStep.js           # Step 4 fleet config
+    PaymentSetupStep.js         # Step 5 payment form
+  ProfileCompleteScreen.js      # Completion summary view
+  SendPackageModal.js           # Document package sending flow
+  pdfGenerator.js               # Client-side PDF generation (move to server-side)
+```
+
+---
+
+## Architecture & Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend Framework | FastAPI (Python) |
+| Database | MongoDB |
+| File Storage | S3 / Cloudinary (your choice) |
+| Email Service | SendGrid / SES (your choice) |
+| Encryption | Fernet (AES-128-CBC) via `cryptography` library |
+| Authentication | JWT Bearer tokens (existing TMS auth system) |
 
 ---
 
 ## Database Schema
 
-Create these MongoDB collections:
-
 ### Collection: `carrier_profiles`
+
 ```javascript
 {
   _id: ObjectId,
@@ -35,17 +91,17 @@ Create these MongoDB collections:
     phone: String,             // Required
     email: String,             // Required
     website: String,
-    logo_url: String           // S3/Cloudinary URL
+    logo_url: String           // Storage URL
   },
   
   documents: [{
     _id: ObjectId,
     document_type: String,     // e.g., "nsc_certificate", "usdot_mc_authority"
-    name: String,              // Display name
-    file_url: String,          // S3/Cloudinary URL
+    name: String,              // Display name (see Document Types Reference)
+    file_url: String,          // Storage URL (use signed URLs)
     file_name: String,         // Original filename
     uploaded_at: Date,
-    expiry_date: Date,
+    expiry_date: Date,         // Optional
     status: String             // "uploaded" | "expired" | "expiring_soon"
   }],
   
@@ -71,7 +127,7 @@ Create these MongoDB collections:
   fleet: {
     number_of_trucks: Number,
     number_of_trailers: Number,
-    equipment_types: [String], // ["dry_van", "reefer", "flatbed", etc.]
+    equipment_types: [String], // ["dry_van", "reefer", "flatbed", "tanker", "step_deck", "hotshot", "sprinter", "other"]
     hazmat_capable: Boolean,
     cross_border_capable: Boolean,
     eld_provider: String,
@@ -88,10 +144,10 @@ Create these MongoDB collections:
     factoring_company_name: String,
     noa_document_url: String,
     bank_name: String,
-    transit_number_encrypted: String,      // ENCRYPT THIS
-    institution_number_encrypted: String,  // ENCRYPT THIS
-    aba_routing_number_encrypted: String,  // ENCRYPT THIS
-    account_number_encrypted: String,      // ENCRYPT THIS
+    transit_number_encrypted: String,      // ENCRYPT - Canadian bank transit
+    institution_number_encrypted: String,  // ENCRYPT - Canadian bank institution
+    aba_routing_number_encrypted: String,  // ENCRYPT - US routing number
+    account_number_encrypted: String,      // ENCRYPT - Bank account number
     account_type: String,      // "chequing" | "savings"
     currency: String,          // "CAD" | "USD" | "Both"
     payment_terms: String      // "quick_pay" | "net_15" | "net_30" | "net_45"
@@ -106,6 +162,7 @@ Create these MongoDB collections:
 ```
 
 ### Collection: `carrier_packages`
+
 ```javascript
 {
   _id: ObjectId,
@@ -114,11 +171,11 @@ Create these MongoDB collections:
   recipient_company: String,
   recipient_email: String,
   message: String,
-  document_ids: [ObjectId],
-  documents_included: [String],  // Document names for display
-  pdf_url: String,
+  document_ids: [ObjectId],        // References to documents in carrier_profiles
+  documents_included: [String],    // Document display names for quick reference
+  pdf_url: String,                 // Generated PDF storage URL
   date_sent: Date,
-  status: String,                // "sent" | "opened" | "downloaded"
+  status: String,                  // "sent" | "opened" | "downloaded"
   last_opened: Date,
   reminder_sent_at: Date,
   created_at: Date
@@ -127,339 +184,331 @@ Create these MongoDB collections:
 
 ---
 
-## API Endpoints to Implement
+## API Endpoints
 
 ### Base Path: `/api/carrier-profiles`
 
-All endpoints require JWT authentication via `Authorization: Bearer <token>` header.
+All endpoints require JWT authentication: `Authorization: Bearer <token>`
 
 ---
 
 ### 1. GET /api/carrier-profiles/me
 
-**Purpose:** Get current user's carrier profile
+**Purpose:** Load the current user's carrier profile.
 
-**Logic:**
-```python
-@router.get("/me")
-async def get_my_profile(current_user = Depends(get_current_user)):
-    profile = await db.carrier_profiles.find_one({"user_id": current_user.id})
-    if not profile:
-        raise HTTPException(404, "Profile not found")
-    
-    # Mask sensitive banking fields
-    if profile.get("payment"):
-        if profile["payment"].get("account_number_encrypted"):
-            decrypted = decrypt(profile["payment"]["account_number_encrypted"])
-            profile["payment"]["account_number_masked"] = "****" + decrypted[-4:]
-            del profile["payment"]["account_number_encrypted"]
-        # Remove other encrypted fields from response
-        for field in ["transit_number_encrypted", "institution_number_encrypted", "aba_routing_number_encrypted"]:
-            if field in profile["payment"]:
-                del profile["payment"][field]
-    
-    return profile
+**Response (200):**
+```json
+{
+  "id": "profile_abc123",
+  "user_id": "user_456",
+  "company_id": "company_789",
+  "company_info": {
+    "legal_name": "Northern Express Trucking Inc.",
+    "dba_name": "Northern Express",
+    "company_type": "trucking_company",
+    "country": "Canada",
+    "province": "Ontario",
+    "phone": "(416) 555-1234",
+    "email": "dispatch@northernexpress.ca",
+    "website": "https://northernexpress.ca",
+    "logo_url": "https://storage.example.com/logos/company_789.png"
+  },
+  "documents": [
+    {
+      "id": "doc_1",
+      "document_type": "nsc_certificate",
+      "name": "NSC Certificate",
+      "file_url": "https://storage.example.com/docs/nsc.pdf",
+      "file_name": "nsc_certificate.pdf",
+      "uploaded_at": "2024-01-15T10:30:00Z",
+      "expiry_date": "2025-01-15T00:00:00Z",
+      "status": "uploaded"
+    }
+  ],
+  "regulatory": {
+    "nsc_number": "NSC123456",
+    "nsc_safety_rating": "Satisfactory",
+    "cvor_number": "CVOR789",
+    "cvor_safety_rating": "Satisfactory",
+    "cra_business_number": "123456789RC0001",
+    "gst_hst_number": "123456789RT0001",
+    "usdot_number": null,
+    "mc_number": null,
+    "ein": null,
+    "ifta_account_number": null,
+    "ifta_base_jurisdiction": null,
+    "cross_border_capable": true,
+    "fast_card_enrolled": false
+  },
+  "fleet": {
+    "number_of_trucks": 12,
+    "number_of_trailers": 18,
+    "equipment_types": ["dry_van", "reefer", "flatbed"],
+    "hazmat_capable": false,
+    "cross_border_capable": true,
+    "eld_provider": "Samsara",
+    "preferred_lanes": [
+      { "origin": "Toronto", "destination": "Montreal", "service_type": "ftl" }
+    ],
+    "is_24x7_dispatch": true
+  },
+  "payment": {
+    "payment_method": "eft",
+    "factoring_company_name": null,
+    "bank_name": "TD Bank",
+    "account_number_masked": "****5678",
+    "has_transit_number": true,
+    "has_institution_number": true,
+    "has_aba_routing_number": false,
+    "account_type": "chequing",
+    "currency": "CAD",
+    "payment_terms": "net_30"
+  },
+  "current_step": 5,
+  "is_complete": true,
+  "completed_at": "2024-01-15T12:00:00Z",
+  "created_at": "2024-01-10T09:00:00Z",
+  "updated_at": "2024-01-15T12:00:00Z"
+}
 ```
 
-**Response:** Full profile object (see schema above)
+**Response (404):** Profile not found - frontend shows empty wizard.
+
+**Important Notes on Payment Response:**
+- **Never return** raw encrypted fields in the response
+- Return `account_number_masked` as `"****" + last_4_digits`
+- Return boolean flags `has_transit_number`, `has_institution_number`, `has_aba_routing_number` so the frontend knows which fields are set
+- Remove all `*_encrypted` fields before responding
 
 ---
 
 ### 2. POST /api/carrier-profiles
 
-**Purpose:** Create new carrier profile
+**Purpose:** Create a new carrier profile (called once when wizard starts for the first time).
 
-**Logic:**
-```python
-@router.post("/")
-async def create_profile(data: dict, current_user = Depends(get_current_user)):
-    # Check if profile already exists
-    existing = await db.carrier_profiles.find_one({"user_id": current_user.id})
-    if existing:
-        raise HTTPException(409, "Profile already exists")
-    
-    profile = {
-        "user_id": current_user.id,
-        "company_id": current_user.company_id,
-        "company_info": data.get("company_info", {}),
-        "documents": [],
-        "regulatory": {},
-        "fleet": {"equipment_types": [], "preferred_lanes": []},
-        "payment": {},
-        "current_step": 1,
-        "is_complete": False,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
-    }
-    
-    result = await db.carrier_profiles.insert_one(profile)
-    profile["_id"] = result.inserted_id
-    return profile
+**Request:**
+```json
+{
+  "company_info": {
+    "legal_name": "Northern Express Trucking Inc."
+  }
+}
 ```
+
+**Response (201):** Returns the created profile object (same shape as GET /me).
+
+**Response (409):** Profile already exists for this user.
 
 ---
 
-### 3. PATCH /api/carrier-profiles/me
+### 3. PATCH /api/carrier-profiles/me  *(Most Critical Endpoint)*
 
-**Purpose:** Update profile (partial update - most important endpoint!)
+**Purpose:** Partial update of the carrier profile. Called every time the user navigates between wizard steps (auto-save).
 
-**Logic:**
-```python
-@router.patch("/me")
-async def update_profile(data: dict, current_user = Depends(get_current_user)):
-    profile = await db.carrier_profiles.find_one({"user_id": current_user.id})
-    if not profile:
-        # Auto-create if doesn't exist
-        profile = await create_profile({}, current_user)
-    
-    update_data = {"updated_at": datetime.utcnow()}
-    
-    # Handle nested updates
-    if "company_info" in data:
-        for key, value in data["company_info"].items():
-            update_data[f"company_info.{key}"] = value
-    
-    if "regulatory" in data:
-        for key, value in data["regulatory"].items():
-            update_data[f"regulatory.{key}"] = value
-    
-    if "fleet" in data:
-        for key, value in data["fleet"].items():
-            update_data[f"fleet.{key}"] = value
-    
-    if "payment" in data:
-        for key, value in data["payment"].items():
-            # Encrypt sensitive fields
-            if key in ["account_number", "transit_number", "institution_number", "aba_routing_number"]:
-                update_data[f"payment.{key}_encrypted"] = encrypt(value)
-            else:
-                update_data[f"payment.{key}"] = value
-    
-    if "current_step" in data:
-        update_data["current_step"] = data["current_step"]
-    
-    await db.carrier_profiles.update_one(
-        {"user_id": current_user.id},
-        {"$set": update_data}
-    )
-    
-    return await get_my_profile(current_user)
+**Request (any combination of fields):**
+```json
+{
+  "company_info": {
+    "legal_name": "Updated Name",
+    "phone": "(416) 555-9999"
+  },
+  "regulatory": {
+    "nsc_number": "NSC123456"
+  },
+  "fleet": {
+    "number_of_trucks": 10,
+    "equipment_types": ["dry_van", "reefer"]
+  },
+  "payment": {
+    "payment_method": "eft",
+    "bank_name": "TD Bank",
+    "transit_number": "12345",
+    "account_number": "9876543210"
+  },
+  "current_step": 3
+}
 ```
+
+**Implementation Notes:**
+- Use MongoDB dot notation for nested updates (e.g., `company_info.legal_name`)
+- **Encrypt** payment fields: `transit_number`, `institution_number`, `aba_routing_number`, `account_number` before storing (store as `*_encrypted`)
+- If the profile doesn't exist yet, auto-create it
+
+**Response (200):** Returns the full updated profile (same shape as GET /me).
 
 ---
 
 ### 4. POST /api/carrier-profiles/me/complete
 
-**Purpose:** Mark profile as complete
+**Purpose:** Mark the profile as complete (called when user finishes step 5).
 
-```python
-@router.post("/me/complete")
-async def complete_profile(current_user = Depends(get_current_user)):
-    await db.carrier_profiles.update_one(
-        {"user_id": current_user.id},
-        {"$set": {
-            "is_complete": True,
-            "completed_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
-        }}
-    )
-    return {"status": "completed", "completed_at": datetime.utcnow()}
+**Response (200):**
+```json
+{
+  "id": "profile_abc123",
+  "is_complete": true,
+  "completed_at": "2024-01-15T12:00:00Z"
+}
 ```
 
 ---
 
 ### 5. POST /api/carrier-profiles/me/logo
 
-**Purpose:** Upload company logo
+**Purpose:** Upload company logo image.
 
-```python
-@router.post("/me/logo")
-async def upload_logo(file: UploadFile, current_user = Depends(get_current_user)):
-    # Validate file
-    if file.content_type not in ["image/png", "image/jpeg", "image/svg+xml"]:
-        raise HTTPException(400, "Invalid file type. Use PNG, JPG, or SVG")
-    
-    if file.size > 5 * 1024 * 1024:  # 5MB
-        raise HTTPException(400, "File too large. Max 5MB")
-    
-    # Upload to S3/Cloudinary
-    logo_url = await upload_to_storage(file, folder="logos")
-    
-    # Update profile
-    await db.carrier_profiles.update_one(
-        {"user_id": current_user.id},
-        {"$set": {"company_info.logo_url": logo_url, "updated_at": datetime.utcnow()}}
-    )
-    
-    return {"logo_url": logo_url}
+**Request:** `multipart/form-data`
+- `file`: Image file
+
+**Validations:**
+- Allowed types: `image/png`, `image/jpeg`, `image/svg+xml`
+- Max file size: 5MB
+
+**Response (200):**
+```json
+{
+  "logo_url": "https://storage.example.com/logos/company_789.png"
+}
 ```
+
+**Side effect:** Also updates `company_info.logo_url` in the carrier profile.
 
 ---
 
 ### 6. POST /api/carrier-profiles/me/documents
 
-**Purpose:** Upload a document
+**Purpose:** Upload a compliance document.
 
+**Request:** `multipart/form-data`
+- `file`: Document file
+- `document_type`: String (see Document Types Reference below)
+- `expiry_date`: ISO date string (optional, e.g., `"2025-12-31"`)
+
+**Validations:**
+- Allowed types: `application/pdf`, `image/png`, `image/jpeg`
+- Max file size: 10MB
+
+**Status Calculation Logic:**
 ```python
-@router.post("/me/documents")
-async def upload_document(
-    file: UploadFile,
-    document_type: str = Form(...),
-    expiry_date: str = Form(None),
-    current_user = Depends(get_current_user)
-):
-    # Validate
-    if file.content_type not in ["application/pdf", "image/png", "image/jpeg"]:
-        raise HTTPException(400, "Invalid file type. Use PDF, PNG, or JPG")
-    
-    if file.size > 10 * 1024 * 1024:  # 10MB
-        raise HTTPException(400, "File too large. Max 10MB")
-    
-    # Upload to storage
-    file_url = await upload_to_storage(file, folder="documents")
-    
-    # Get document display name
-    doc_names = {
-        "nsc_certificate": "NSC Certificate",
-        "cvor_abstract": "CVOR Abstract",
-        "cargo_insurance_ca": "Cargo Insurance Certificate (CA)",
-        "auto_liability_ca": "Auto Liability Certificate (CA)",
-        "wsib_clearance": "WSIB Clearance Certificate",
-        "gst_hst_registration": "GST/HST Registration",
-        "void_cheque": "Void Cheque or Bank Letter",
-        "usdot_mc_authority": "USDOT / MC Authority Letter",
-        "boc3_filing": "BOC-3 Filing Confirmation",
-        "ucr_receipt": "UCR Receipt",
-        "ifta_licence": "IFTA Licence",
-        "cargo_insurance_us": "Cargo Insurance Certificate (US)",
-        "auto_liability_us": "Auto Liability Certificate (US)",
-        "w9_w8ben": "W-9 or W-8BEN"
-    }
-    
-    # Calculate status
+if expiry_date and expiry_date < now:
+    status = "expired"
+elif expiry_date and (expiry_date - now).days <= 30:
+    status = "expiring_soon"
+else:
     status = "uploaded"
-    exp_date = None
-    if expiry_date:
-        exp_date = datetime.fromisoformat(expiry_date)
-        if exp_date < datetime.utcnow():
-            status = "expired"
-        elif (exp_date - datetime.utcnow()).days <= 30:
-            status = "expiring_soon"
-    
-    doc = {
-        "_id": ObjectId(),
-        "document_type": document_type,
-        "name": doc_names.get(document_type, document_type),
-        "file_url": file_url,
-        "file_name": file.filename,
-        "uploaded_at": datetime.utcnow(),
-        "expiry_date": exp_date,
-        "status": status
-    }
-    
-    await db.carrier_profiles.update_one(
-        {"user_id": current_user.id},
-        {"$push": {"documents": doc}, "$set": {"updated_at": datetime.utcnow()}}
-    )
-    
-    return doc
 ```
+
+**Response (201):**
+```json
+{
+  "id": "doc_123",
+  "document_type": "nsc_certificate",
+  "name": "NSC Certificate",
+  "file_url": "https://storage.example.com/docs/doc_123.pdf",
+  "file_name": "nsc_certificate.pdf",
+  "uploaded_at": "2024-01-15T10:30:00Z",
+  "expiry_date": "2025-01-15T00:00:00Z",
+  "status": "uploaded"
+}
+```
+
+**Side effect:** Pushes the document into the `documents` array in the carrier profile.
 
 ---
 
 ### 7. DELETE /api/carrier-profiles/me/documents/{document_id}
 
-```python
-@router.delete("/me/documents/{document_id}")
-async def delete_document(document_id: str, current_user = Depends(get_current_user)):
-    await db.carrier_profiles.update_one(
-        {"user_id": current_user.id},
-        {"$pull": {"documents": {"_id": ObjectId(document_id)}}}
-    )
-    return {"status": "deleted"}
-```
+**Purpose:** Remove a document from the profile.
+
+**Response (204):** No content.
+
+**Side effect:** Pulls the document from the `documents` array using `$pull`.
 
 ---
 
 ### 8. POST /api/carrier-profiles/me/packages
 
-**Purpose:** Send document package to recipient
+**Purpose:** Generate and send a document package to a recipient.
 
-```python
-@router.post("/me/packages")
-async def send_package(data: dict, current_user = Depends(get_current_user)):
-    profile = await db.carrier_profiles.find_one({"user_id": current_user.id})
-    if not profile:
-        raise HTTPException(404, "Profile not found")
-    
-    # Get selected documents
-    doc_ids = [ObjectId(d) for d in data["document_ids"]]
-    selected_docs = [d for d in profile["documents"] if d["_id"] in doc_ids]
-    
-    # Generate PDF (use your PDF library)
-    pdf_url = await generate_package_pdf(
-        company_info=profile["company_info"],
-        documents=selected_docs,
-        recipient=data
-    )
-    
-    # Create package record
-    package = {
-        "carrier_profile_id": profile["_id"],
-        "recipient_name": data["recipient_name"],
-        "recipient_company": data["recipient_company"],
-        "recipient_email": data["recipient_email"],
-        "message": data.get("message", ""),
-        "document_ids": doc_ids,
-        "documents_included": [d["name"] for d in selected_docs],
-        "pdf_url": pdf_url,
-        "date_sent": datetime.utcnow(),
-        "status": "sent",
-        "created_at": datetime.utcnow()
-    }
-    
-    result = await db.carrier_packages.insert_one(package)
-    package["_id"] = result.inserted_id
-    
-    # Send email (use SendGrid or similar)
-    await send_package_email(
-        to_email=data["recipient_email"],
-        to_name=data["recipient_name"],
-        from_company=profile["company_info"]["legal_name"],
-        pdf_url=pdf_url,
-        message=data.get("message", "")
-    )
-    
-    return package
+**Request:**
+```json
+{
+  "recipient_name": "John Smith",
+  "recipient_company": "ABC Logistics",
+  "recipient_email": "john@abclogistics.com",
+  "message": "Please find our carrier documents attached.",
+  "document_ids": ["doc_123", "doc_456"]
+}
+```
+
+**Backend Should:**
+1. Fetch the carrier profile and selected documents
+2. Generate a PDF cover page (carrier logo, company name, date, recipient info, document list)
+3. Store the PDF in cloud storage
+4. Send email to the recipient with the PDF download link
+5. Create a tracking record in `carrier_packages` collection
+
+**Response (201):**
+```json
+{
+  "id": "package_123",
+  "recipient_name": "John Smith",
+  "recipient_company": "ABC Logistics",
+  "recipient_email": "john@abclogistics.com",
+  "documents_included": ["NSC Certificate", "Cargo Insurance Certificate (CA)"],
+  "pdf_url": "https://storage.example.com/packages/package_123.pdf",
+  "date_sent": "2024-01-15T14:00:00Z",
+  "status": "sent"
+}
 ```
 
 ---
 
 ### 9. GET /api/carrier-profiles/me/packages
 
-```python
-@router.get("/me/packages")
-async def get_packages(current_user = Depends(get_current_user)):
-    profile = await db.carrier_profiles.find_one({"user_id": current_user.id})
-    if not profile:
-        return []
-    
-    packages = await db.carrier_packages.find(
-        {"carrier_profile_id": profile["_id"]}
-    ).sort("date_sent", -1).to_list(100)
-    
-    return packages
+**Purpose:** List all sent packages for tracking.
+
+**Response (200):**
+```json
+[
+  {
+    "id": "package_123",
+    "recipient_name": "John Smith",
+    "recipient_company": "ABC Logistics",
+    "recipient_email": "john@abclogistics.com",
+    "documents_included": ["NSC Certificate", "Cargo Insurance"],
+    "date_sent": "2024-01-15T14:00:00Z",
+    "status": "opened",
+    "last_opened": "2024-01-16T09:30:00Z",
+    "reminder_sent_at": null
+  }
+]
 ```
 
 ---
 
-## File Storage Setup
+### 10. POST /api/carrier-profiles/me/packages/{package_id}/reminder
+
+**Purpose:** Send a follow-up reminder email for an unopened package.
+
+**Response (200):**
+```json
+{
+  "message": "Reminder sent successfully",
+  "reminder_sent_at": "2024-01-18T10:00:00Z"
+}
+```
+
+---
+
+## File Storage
 
 Use S3, Cloudinary, or similar. Example with S3:
 
 ```python
 import boto3
-from botocore.config import Config
+import uuid
+import os
 
 s3_client = boto3.client(
     's3',
@@ -478,19 +527,28 @@ async def upload_to_storage(file: UploadFile, folder: str) -> str:
         ExtraArgs={'ContentType': file.content_type}
     )
     
-    # Return signed URL or public URL
+    # Return the URL (use signed URLs for documents, public for logos)
     return f"https://{os.environ['S3_BUCKET']}.s3.amazonaws.com/{key}"
 ```
 
+**Best practices:**
+- Use signed URLs with 1-hour expiration for document access
+- Logos can be public
+- Scan uploaded files for malware before storing
+
 ---
 
-## Encryption for Banking Fields
+## Encryption
+
+All sensitive banking fields must be encrypted at rest using Fernet (AES symmetric encryption).
 
 ```python
 from cryptography.fernet import Fernet
+import os
 
-# Store this key securely in environment variables
-ENCRYPTION_KEY = os.environ['ENCRYPTION_KEY']  # Generate with Fernet.generate_key()
+# Generate key once: Fernet.generate_key()
+# Store in env var ENCRYPTION_KEY
+ENCRYPTION_KEY = os.environ['ENCRYPTION_KEY']
 cipher = Fernet(ENCRYPTION_KEY)
 
 def encrypt(value: str) -> str:
@@ -500,87 +558,207 @@ def decrypt(encrypted_value: str) -> str:
     return cipher.decrypt(encrypted_value.encode()).decode()
 ```
 
+**Fields to encrypt before storing:**
+- `transit_number` -> stored as `transit_number_encrypted`
+- `institution_number` -> stored as `institution_number_encrypted`
+- `aba_routing_number` -> stored as `aba_routing_number_encrypted`
+- `account_number` -> stored as `account_number_encrypted`
+
+**In GET responses:**
+- Return `account_number_masked` as `"****" + decrypt(account_number_encrypted)[-4:]`
+- Return boolean flags: `has_transit_number`, `has_institution_number`, `has_aba_routing_number`
+- **Never return** the `*_encrypted` fields in API responses
+
 ---
 
-## Environment Variables Needed
+## Document Types Reference
+
+### Canadian Documents
+
+| Type ID | Display Name | Required |
+|---------|-------------|----------|
+| `nsc_certificate` | NSC Certificate | Yes |
+| `cvor_abstract` | CVOR Abstract | Yes |
+| `cargo_insurance_ca` | Cargo Insurance Certificate (CA) | Yes |
+| `auto_liability_ca` | Auto Liability Certificate (CA) | Yes |
+| `wsib_clearance` | WSIB Clearance Certificate | Yes |
+| `gst_hst_registration` | GST/HST Registration | Yes |
+| `void_cheque` | Void Cheque or Bank Letter | Yes |
+
+### US Documents
+
+| Type ID | Display Name | Required |
+|---------|-------------|----------|
+| `usdot_mc_authority` | USDOT / MC Authority Letter | Yes |
+| `boc3_filing` | BOC-3 Filing Confirmation | Yes |
+| `ucr_receipt` | UCR Receipt | Yes |
+| `ifta_licence` | IFTA Licence | Yes |
+| `cargo_insurance_us` | Cargo Insurance Certificate (US) | Yes |
+| `auto_liability_us` | Auto Liability Certificate (US) | Yes |
+| `w9_w8ben` | W-9 or W-8BEN | Yes |
+
+**Note:** Documents shown to the user depend on their `company_info.country` selection:
+- `"Canada"` -> show Canadian docs only
+- `"USA"` -> show US docs only
+- `"Both"` -> show all docs
+
+---
+
+## Security Requirements
+
+1. **Authentication:** All endpoints require a valid JWT Bearer token. Use the existing TMS auth system.
+
+2. **Banking Encryption:** All banking fields encrypted at rest with AES (see Encryption section).
+
+3. **File Validation:**
+   - Documents: PDF, PNG, JPG - Max 10MB
+   - Logo: PNG, JPG, SVG - Max 5MB
+   - Scan uploaded files for malware
+
+4. **Signed URLs:** Use signed URLs with 1-hour expiration for document downloads. Never expose raw storage URLs.
+
+5. **Rate Limiting:** 10 file uploads per minute per user.
+
+6. **Audit Logging:** Log all profile updates and document access for compliance.
+
+---
+
+## Environment Variables
+
+Add these to your backend `.env` file:
 
 ```bash
-# Add to your .env file
+# Database (existing)
 MONGO_URL=mongodb://...
 DB_NAME=tms_db
 
 # File Storage (S3 example)
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
-S3_BUCKET=tms-carrier-docs
+S3_BUCKET=tms-carrier-documents
 
-# Encryption
-ENCRYPTION_KEY=your-32-byte-fernet-key
+# Encryption (generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+ENCRYPTION_KEY=your-fernet-key-here
 
-# Email (SendGrid example)
+# Email Service (SendGrid example)
 SENDGRID_API_KEY=...
 EMAIL_FROM=noreply@yourtms.com
+
+# JWT (existing)
+JWT_SECRET=...
 ```
 
 ---
 
-## Testing Your Implementation
+## Testing
 
-### Quick Test Commands
+### Quick Test with cURL
 
 ```bash
-# Set your token
-export TOKEN="your_jwt_token"
-export API="https://api.staging.integratedtech.ca"
+# Set your variables
+export TOKEN="your_jwt_token_here"
+export API="https://your-api-domain.com"
 
-# 1. Create/Get profile
-curl -X GET "$API/api/carrier-profiles/me" -H "Authorization: Bearer $TOKEN"
+# 1. Get profile (expect 404 first time)
+curl -X GET "$API/api/carrier-profiles/me" \
+  -H "Authorization: Bearer $TOKEN"
 
-# 2. Update company info
+# 2. Create profile
+curl -X POST "$API/api/carrier-profiles" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"company_info": {"legal_name": "Test Trucking Inc.", "country": "Canada"}}'
+
+# 3. Update profile (partial update)
 curl -X PATCH "$API/api/carrier-profiles/me" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"company_info": {"legal_name": "Test Trucking", "country": "Canada"}}'
+  -d '{
+    "company_info": {"phone": "(416) 555-1234", "email": "test@test.com"},
+    "regulatory": {"nsc_number": "NSC123456"},
+    "current_step": 3
+  }'
 
-# 3. Upload a document
+# 4. Upload a document
 curl -X POST "$API/api/carrier-profiles/me/documents" \
   -H "Authorization: Bearer $TOKEN" \
-  -F "file=@test.pdf" \
-  -F "document_type=nsc_certificate"
+  -F "file=@test_document.pdf" \
+  -F "document_type=nsc_certificate" \
+  -F "expiry_date=2025-12-31"
 
-# 4. Complete profile
+# 5. Upload logo
+curl -X POST "$API/api/carrier-profiles/me/logo" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@logo.png"
+
+# 6. Complete profile
 curl -X POST "$API/api/carrier-profiles/me/complete" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 7. Send a package
+curl -X POST "$API/api/carrier-profiles/me/packages" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipient_name": "Test User",
+    "recipient_company": "Test Co",
+    "recipient_email": "test@example.com",
+    "document_ids": ["doc_id_here"]
+  }'
+
+# 8. Get sent packages
+curl -X GET "$API/api/carrier-profiles/me/packages" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ---
 
-## Sync with Frontend
+## Frontend Integration Checklist
 
-Once your endpoints are ready:
+Once the backend is deployed and all endpoints return correct responses:
 
-1. **Test locally** using the cURL commands above
-2. **Deploy to staging** at `api.staging.integratedtech.ca`
-3. **Notify frontend team** - they will update the React code to call your APIs instead of localStorage
-4. **Test together** using the live frontend
+1. Open `/app/src/components/carrier-profile/carrierProfileAPI.js`
+2. Change `const USE_BACKEND_API = false;` to `const USE_BACKEND_API = true;`
+3. Update the `REACT_APP_BACKEND_URL` in `/app/.env` if the API domain changed
+4. Test the full wizard flow end-to-end
+5. Verify: profile load, save on each step, logo upload, document upload/delete, profile completion, package sending
 
-The frontend expects these exact endpoint paths. Don't change the URL structure.
+**The frontend is already coded to call these exact endpoints.** No frontend code changes are needed beyond flipping the flag.
+
+---
+
+## Error Codes
+
+| Code | When |
+|------|------|
+| 400 | Invalid request body or file type |
+| 401 | Missing or invalid JWT token |
+| 403 | Access denied (wrong user) |
+| 404 | Profile or document not found |
+| 409 | Profile already exists (on POST create) |
+| 413 | File too large |
+| 415 | Unsupported media type |
+| 429 | Rate limit exceeded |
+| 500 | Server error |
+
+---
+
+## Implementation Priority
+
+| Priority | Endpoint | Why |
+|----------|----------|-----|
+| 1 | `PATCH /me` | Called on every step navigation (auto-save) |
+| 2 | `GET /me` | Called on wizard load |
+| 3 | `POST /me/documents` | Document upload flow |
+| 4 | `POST /me/logo` | Logo upload |
+| 5 | `POST /me/complete` | Profile completion |
+| 6 | `POST /me/packages` | Package sending (can be phase 2) |
+| 7 | `GET /me/packages` | Package tracking (can be phase 2) |
 
 ---
 
 ## Questions?
 
-The frontend code is at: `/app/src/components/carrier-profile/`
-
-Key files to reference:
-- `CarrierProfileWizard.js` - Main logic, shows what data is saved at each step
-- `steps/*.js` - Individual step forms showing field names
-- `SendPackageModal.js` - Package sending flow
-
----
-
-**Priority Order:**
-1. `PATCH /me` - Most critical, handles all form saves
-2. `GET /me` - Loads existing data
-3. `POST /me/documents` - Document uploads
-4. `POST /me/packages` - Package sending (can be phase 2)
+- **Frontend code:** `/app/src/components/carrier-profile/`
+- **API service layer:** `/app/src/components/carrier-profile/carrierProfileAPI.js` (shows exactly what the frontend sends/expects)
+- **Key file:** `CarrierProfileWizard.js` - shows what data is saved at each wizard step

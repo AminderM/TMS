@@ -6,7 +6,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   FileText, Upload, Check, AlertTriangle, X, 
-  Calendar as CalendarIcon, Eye, Trash2 
+  Calendar as CalendarIcon, Eye, Trash2, Loader2 
 } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 
@@ -30,9 +30,10 @@ const usDocuments = [
   { id: 'w9_w8ben', name: 'W-9 or W-8BEN', description: 'Tax identification form', required: true },
 ];
 
-const DocumentUploadStep = ({ data, country, onChange }) => {
+const DocumentUploadStep = ({ data, country, onChange, onUpload, onDelete }) => {
   const fileInputRefs = useRef({});
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [uploadingDoc, setUploadingDoc] = useState(null);
 
   const getDocumentList = () => {
     if (country === 'Canada') return canadianDocuments;
@@ -41,7 +42,7 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
     return [...canadianDocuments, ...usDocuments];
   };
 
-  const handleFileUpload = (docId, file) => {
+  const handleFileUpload = async (docId, file) => {
     if (!file) return;
 
     // Validate file type
@@ -57,6 +58,20 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
       return;
     }
 
+    // If onUpload prop exists, use API upload
+    if (onUpload) {
+      setUploadingDoc(docId);
+      try {
+        await onUpload(file, docId, null);
+      } catch (error) {
+        console.error('Upload failed:', error);
+      } finally {
+        setUploadingDoc(null);
+      }
+      return;
+    }
+
+    // Fallback to local storage (for demo)
     const reader = new FileReader();
     reader.onload = (e) => {
       onChange({
@@ -85,7 +100,18 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
     });
   };
 
-  const handleRemoveDocument = (docId) => {
+  const handleRemoveDocument = async (docId) => {
+    const docData = data[docId];
+    if (onDelete && docData?.id) {
+      try {
+        await onDelete(docId, docData.id);
+      } catch (error) {
+        console.error('Delete failed:', error);
+      }
+      return;
+    }
+    
+    // Fallback to local removal
     const newData = { ...data };
     delete newData[docId];
     onChange(newData);
@@ -213,11 +239,21 @@ const DocumentUploadStep = ({ data, country, onChange }) => {
                         variant="outline"
                         size="sm"
                         onClick={() => fileInputRefs.current[doc.id]?.click()}
+                        disabled={uploadingDoc === doc.id}
                         className="border-border text-primary hover:bg-muted"
                         data-testid={`upload-${doc.id}`}
                       >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload
+                        {uploadingDoc === doc.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload
+                          </>
+                        )}
                       </Button>
                     )}
                     <input

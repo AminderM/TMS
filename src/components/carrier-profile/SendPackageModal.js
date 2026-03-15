@@ -88,7 +88,11 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
     setIsSending(true);
     
     try {
-      // Generate PDF
+      // Get selected document IDs
+      const selectedDocIds = Object.keys(selectedDocs)
+        .filter(docId => selectedDocs[docId] && documents[docId]?.id)
+        .map(docId => documents[docId].id);
+      
       const selectedDocsList = getDocumentList()
         .filter(doc => selectedDocs[doc.id])
         .map(doc => ({
@@ -96,40 +100,25 @@ const SendPackageModal = ({ profileData, onSend, onClose }) => {
           ...documents[doc.id],
         }));
 
-      await generateCarrierPackagePDF({
-        companyInfo,
-        documents: selectedDocsList,
-        recipient: recipientInfo,
+      // Call API to send package
+      const result = await onSend({
+        recipientName: recipientInfo.name,
+        recipientCompany: recipientInfo.company,
+        recipientEmail: recipientInfo.email,
+        message: recipientInfo.message,
+        documentIds: selectedDocIds,
+        documentsIncluded: selectedDocsList.map(d => d.name),
       });
 
-      // Prepare email
-      const subject = encodeURIComponent(`Carrier Document Package - ${companyInfo.legalName}`);
-      const body = encodeURIComponent(
-        `Hi ${recipientInfo.name},\n\n` +
-        `Please find attached the carrier document package for ${companyInfo.legalName}.\n\n` +
-        (recipientInfo.message ? `${recipientInfo.message}\n\n` : '') +
-        `Documents included:\n` +
-        selectedDocsList.map(doc => `- ${doc.name}`).join('\n') +
-        `\n\nBest regards,\n${companyInfo.legalName}`
-      );
-
-      // Open email client
-      window.location.href = `mailto:${recipientInfo.email}?subject=${subject}&body=${body}`;
-
-      // Record the sent package
-      setTimeout(() => {
-        onSend({
-          recipientName: recipientInfo.name,
-          recipientCompany: recipientInfo.company,
-          recipientEmail: recipientInfo.email,
-          message: recipientInfo.message,
-          documentsIncluded: selectedDocsList.map(d => d.name),
-        });
-      }, 1000);
+      // If there's a public URL, show it to user
+      if (result?.publicUrl) {
+        // Copy link to clipboard
+        navigator.clipboard?.writeText(result.publicUrl);
+      }
 
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error('Error sending package:', error);
+      alert('Failed to send package. Please try again.');
     } finally {
       setIsSending(false);
     }
