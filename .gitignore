@@ -30,14 +30,4 @@ build.tar.gz
 .pm2
 logs/
 *.log-e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files 
-*.env
-*.env.*
+
