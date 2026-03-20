@@ -38,6 +38,6 @@ logs/
 *.env
 *.env.*
 -e 
-# Environment files
+# Environment files 
 *.env
 *.env.*
